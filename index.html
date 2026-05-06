@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#111111">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ENG Pulling">
+  <meta name="description" content="Checklist de acciones correctivas para operaciones Pulling ENG — CGC">
+  <link rel="manifest" href="manifest.json">
+  <title>ENG Pulling CGC</title>
+  <style>
+    :root {
+      --teal: #1D9E75;
+      --teal-dk: #0F6E56;
+      --teal-lt: #E1F5EE;
+      --black: #111111;
+      --white: #FFFFFF;
+      --g50: #F8F8F7;
+      --g100: #EFEFED;
+      --g200: #DEDCDA;
+      --g300: #C5C3BE;
+      --g400: #9B9893;
+      --g600: #5F5E5A;
+      --red: #A32D2D;
+      --amber: #BA7517;
+      --green: #3B6D11;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bot: env(safe-area-inset-bottom, 0px);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--g50); color: var(--black); font-size: 14px; }
+    body { min-height: 100vh; min-height: 100dvh; }
+
+    /* TOP BAR */
+    .topbar {
+      background: var(--black);
+      padding: calc(var(--safe-top) + 10px) 16px 10px;
+      display: flex; align-items: center; gap: 12px;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .topbar-logo { font-size: 17px; font-weight: 700; letter-spacing: 3px; color: var(--white); line-height: 1; }
+    .topbar-bar { height: 3px; background: var(--teal); border-radius: 2px; margin-top: 3px; }
+    .topbar-sep { width: 1px; height: 28px; background: #333; }
+    .topbar-info { flex: 1; }
+    .topbar-title { font-size: 14px; font-weight: 600; color: var(--white); }
+    .topbar-sub { font-size: 11px; color: #888; margin-top: 1px; }
+    .topbar-badge {
+      background: var(--teal); color: var(--white);
+      padding: 4px 10px; border-radius: 20px;
+      font-size: 12px; font-weight: 700; white-space: nowrap;
+    }
+
+    /* SCROLL */
+    .scroll { padding: 14px 14px calc(var(--safe-bot) + 20px); }
+
+    /* STATS */
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px; }
+    .stat { background: var(--white); border: 1px solid var(--g200); border-radius: 10px; padding: 10px 8px; text-align: center; }
+    .stat-label { font-size: 10px; color: var(--g400); margin-bottom: 3px; }
+    .stat-value { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+    /* PROGRESS */
+    .prog-wrap { margin-bottom: 12px; }
+    .prog-track { height: 6px; background: var(--g100); border-radius: 3px; overflow: hidden; }
+    .prog-fill { height: 6px; background: var(--teal); border-radius: 3px; transition: width .4s ease; }
+    .prog-label { font-size: 11px; color: var(--g400); margin-top: 4px; }
+
+    /* EXPORT */
+    .export-row { display: flex; gap: 8px; margin-bottom: 12px; }
+    .export-btn {
+      flex: 1; border: 1px solid var(--g200); border-radius: 10px;
+      padding: 10px 6px; background: var(--white); cursor: pointer;
+      font-size: 13px; font-weight: 500; color: var(--g600);
+      display: flex; align-items: center; justify-content: center; gap: 4px;
+    }
+    .export-btn:active { background: var(--g50); }
+
+    /* DATE */
+    .date-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .date-label { font-size: 11px; color: var(--g400); white-space: nowrap; }
+    .date-input {
+      border: 1px solid var(--g200); border-radius: 8px; padding: 6px 10px;
+      font-size: 12px; color: var(--black); background: var(--white);
+      font-family: inherit;
+    }
+
+    /* FILTERS */
+    .filters { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 12px; scrollbar-width: none; }
+    .filters::-webkit-scrollbar { display: none; }
+    .filter-chip {
+      display: flex; align-items: center; gap: 5px; white-space: nowrap;
+      padding: 6px 12px; border-radius: 20px; border: 1px solid var(--g200);
+      background: var(--white); cursor: pointer; font-size: 12px; color: var(--g600);
+      transition: all .15s;
+    }
+    .filter-chip.active { background: var(--teal); border-color: var(--teal); color: var(--white); }
+    .filter-dot { width: 7px; height: 7px; border-radius: 50%; }
+    .filter-count {
+      font-size: 10px; background: var(--g100); padding: 1px 5px; border-radius: 10px;
+      color: var(--g600); font-variant-numeric: tabular-nums;
+    }
+    .filter-chip.active .filter-count { background: rgba(255,255,255,.25); color: var(--white); }
+
+    /* SECTION */
+    .section-label { font-size: 11px; color: var(--g400); font-weight: 600; text-transform: uppercase; letter-spacing: .8px; margin-bottom: 8px; }
+
+    /* CARDS */
+    .card { background: var(--white); border: 1px solid var(--g200); border-radius: 12px; margin-bottom: 8px; overflow: hidden; }
+    .card-header { display: flex; align-items: flex-start; gap: 8px; padding: 11px 12px; cursor: pointer; background: var(--g50); }
+    .card-header:active { background: var(--g100); }
+    .eq-badge { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 6px; white-space: nowrap; flex-shrink: 0; margin-top: 1px; letter-spacing: .4px; }
+    .card-mid { flex: 1; min-width: 0; }
+    .card-id { font-size: 10px; color: var(--g400); display: block; margin-bottom: 2px; font-variant-numeric: tabular-nums; }
+    .card-desc { font-size: 12px; font-weight: 500; color: var(--black); line-height: 1.4; }
+    .card-right { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0; }
+    .mini-pbar { width: 40px; height: 4px; background: var(--g200); border-radius: 2px; overflow: hidden; }
+    .mini-fill { height: 4px; background: var(--teal); border-radius: 2px; }
+    .card-count { font-size: 10px; color: var(--g400); font-variant-numeric: tabular-nums; }
+    .chevron { font-size: 18px; color: var(--g400); display: inline-block; transition: transform .2s; }
+
+    /* CARD BODY */
+    .card-body { border-top: 1px solid var(--g100); }
+    .card-img { overflow: hidden; max-height: 120px; display: flex; align-items: center; justify-content: center; background: var(--g50); border-bottom: 1px solid var(--g100); }
+    .card-img img { width: 100%; max-height: 120px; object-fit: cover; display: block; }
+    .actions-list { padding: 6px 10px 10px; display: flex; flex-direction: column; gap: 2px; }
+
+    /* ACTION ROW */
+    .action-row { display: flex; align-items: flex-start; gap: 8px; padding: 8px; border-radius: 8px; cursor: pointer; }
+    .action-row:active { filter: brightness(.97); }
+    .cb {
+      width: 18px; height: 18px; border-radius: 4px; border: 1.5px solid var(--g300);
+      flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; margin-top: 1px;
+    }
+    .cb-done { background: var(--teal); border-color: var(--teal); color: var(--white); }
+    .action-body { flex: 1; min-width: 0; }
+    .action-desc { font-size: 12px; color: var(--black); line-height: 1.45; }
+    .action-row.done .action-desc { text-decoration: line-through; color: var(--g400); }
+    .action-meta { display: flex; gap: 8px; margin-top: 3px; flex-wrap: wrap; }
+    .action-resp { font-size: 11px; color: var(--g400); flex: 1; }
+    .action-date { font-size: 11px; font-weight: 500; }
+
+    /* EMPTY */
+    .empty { text-align: center; padding: 48px 16px; color: var(--g400); }
+    .empty-icon { font-size: 36px; margin-bottom: 8px; }
+    .empty p { font-size: 13px; }
+
+    /* TOAST */
+    .toast {
+      position: fixed; bottom: calc(var(--safe-bot) + 20px); left: 50%; transform: translateX(-50%) translateY(20px);
+      background: var(--black); color: var(--white); padding: 10px 20px; border-radius: 20px;
+      font-size: 13px; opacity: 0; transition: all .25s; pointer-events: none; z-index: 200; white-space: nowrap;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div>
+    <div class="topbar-logo">CGC</div>
+    <div class="topbar-bar"></div>
+  </div>
+  <div class="topbar-sep"></div>
+  <div class="topbar-info">
+    <div class="topbar-title">ENG Pulling</div>
+    <div class="topbar-sub">Acciones Correctivas</div>
+  </div>
+  <div class="topbar-badge" id="topbar-pct">0%</div>
+</div>
+
+<div class="scroll">
+
+  <!-- STATS -->
+  <div class="stats-grid">
+    <div class="stat">
+      <div class="stat-label">Total</div>
+      <div class="stat-value" id="s-total">0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Completadas</div>
+      <div class="stat-value" style="color:var(--teal)" id="s-done">0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Pendientes</div>
+      <div class="stat-value" style="color:var(--amber)" id="s-pend">0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Vencidas</div>
+      <div class="stat-value" style="color:var(--red)" id="s-venc">0</div>
+    </div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="prog-wrap">
+    <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+    <div class="prog-label" id="prog-label">Cargando...</div>
+  </div>
+
+  <!-- EXPORT + DATE -->
+  <div class="export-row">
+    <button class="export-btn" onclick="exportPDF()">📄 PDF</button>
+    <button class="export-btn" onclick="exportCSV()">📊 Excel</button>
+  </div>
+
+  <div class="date-row">
+    <span class="date-label">Fecha revisión:</span>
+    <input type="date" class="date-input" id="review-date">
+  </div>
+
+  <!-- FILTERS -->
+  <div class="filters">
+    <button class="filter-chip active" onclick="setFilter('todos',this)">
+      <span class="filter-dot" style="background:#888"></span>
+      Todos
+      <span class="filter-count" id="fc-todos">0</span>
+    </button>
+    <button class="filter-chip" onclick="setFilter('E101',this)">
+      <span class="filter-dot" style="background:#378ADD"></span>
+      ENG-101
+      <span class="filter-count" id="fc-E101">0</span>
+    </button>
+    <button class="filter-chip" onclick="setFilter('E102',this)">
+      <span class="filter-dot" style="background:#639922"></span>
+      ENG-102
+      <span class="filter-count" id="fc-E102">0</span>
+    </button>
+    <button class="filter-chip" onclick="setFilter('E103',this)">
+      <span class="filter-dot" style="background:#BA7517"></span>
+      ENG-103
+      <span class="filter-count" id="fc-E103">0</span>
+    </button>
+    <button class="filter-chip" onclick="setFilter('pendientes',this)">
+      <span class="filter-dot" style="background:var(--red)"></span>
+      Pendientes
+      <span class="filter-count" id="fc-pend">0</span>
+    </button>
+  </div>
+
+  <!-- SECTION LABEL -->
+  <div class="section-label" id="section-count">Cargando eventos...</div>
+
+  <!-- EVENTS -->
+  <div id="events-container"></div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

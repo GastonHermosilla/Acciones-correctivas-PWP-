@@ -1,0 +1,26 @@
+{
+  "name": "ENG Pulling CGC — Acciones Correctivas",
+  "short_name": "ENG Pulling",
+  "description": "Checklist de acciones correctivas para operaciones Pulling ENG en la cuenca Golfo San Jorge",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#111111",
+  "theme_color": "#1D9E75",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "utilities"],
+  "lang": "es"
+}
