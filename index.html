@@ -134,6 +134,16 @@
     .foto-icon{font-size:24px;margin-bottom:4px}
     .foto-label{font-size:12px;color:var(--g400);display:block}
     #m-foto-preview{width:100%;max-height:100px;object-fit:cover;border-radius:7px;display:none;margin-bottom:6px}
+    /* ── LIGHTBOX ── */
+    #lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:500;align-items:center;justify-content:center;padding:16px}
+    #lb-img{max-width:100%;max-height:90dvh;border-radius:8px;object-fit:contain;display:block}
+    .lb-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:22px;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+    /* ── MODAL ACCIONES ── */
+    .m-acciones-add{background:var(--g50);border:1px solid var(--g200);border-radius:10px;padding:10px}
+    .m-ac-row{display:flex;gap:6px;margin-bottom:6px}
+    .m-ac-row .m-input{flex:1}
+    .m-ac-btn{padding:9px 14px;background:var(--black);color:var(--white);border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit}
+    .m-ac-btn:active{background:var(--teal-dk)}
     /* ── TOAST ── */
     .toast{position:fixed;bottom:calc(var(--safe-bot) + 82px);left:50%;transform:translateX(-50%) translateY(16px);background:var(--black);color:var(--white);padding:9px 18px;border-radius:20px;font-size:13px;opacity:0;transition:all .25s;pointer-events:none;z-index:300;white-space:nowrap}
     .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -202,10 +212,16 @@
       </div>
     </div>
 
+    <!-- TÍTULO -->
+    <div class="m-field">
+      <label class="m-label" for="m-titulo">Título del evento</label>
+      <input class="m-input" id="m-titulo" type="text" placeholder="Ej: Caída de objeto en boca de pozo">
+    </div>
+
     <!-- DESCRIPCIÓN -->
     <div class="m-field">
-      <label class="m-label" for="m-desc">Descripción breve del evento</label>
-      <textarea class="m-textarea" id="m-desc" placeholder="¿Qué ocurrió? Describí brevemente el evento no deseado"></textarea>
+      <label class="m-label" for="m-desc">Descripción del evento</label>
+      <textarea class="m-textarea" id="m-desc" placeholder="Describí brevemente qué ocurrió, cómo y dónde"></textarea>
     </div>
 
     <!-- CONTRATISTA y EQUIPO -->
@@ -216,7 +232,7 @@
       </div>
       <div class="m-field">
         <label class="m-label" for="m-equipo-new">Equipo</label>
-        <input class="m-input" id="m-equipo-new" type="text" placeholder="Ej: E101, RIG-5...">
+        <input class="m-input" id="m-equipo-new" type="text" placeholder="Ej: E101, RIG-5">
       </div>
     </div>
 
@@ -241,6 +257,21 @@
       </div>
     </div>
 
+    <!-- ACCIONES CORRECTIVAS -->
+    <div class="m-field">
+      <label class="m-label">Acciones correctivas</label>
+      <div id="m-acciones-list" style="margin-bottom:8px"></div>
+      <div class="m-acciones-add">
+        <div style="font-size:11px;color:var(--g400);margin-bottom:6px;font-weight:600">+ Agregar acción</div>
+        <input class="m-input" id="m-ac-desc" type="text" placeholder="Descripción de la acción" style="margin-bottom:6px">
+        <div class="m-ac-row">
+          <input class="m-input" id="m-ac-resp" type="text" placeholder="Responsable">
+          <input class="m-input" id="m-ac-fecha" type="text" placeholder="Fecha">
+          <button class="m-ac-btn" onclick="addModalAccion()">+</button>
+        </div>
+      </div>
+    </div>
+
     <div class="m-actions">
       <button class="m-cancel" onclick="closeModal()">Cancelar</button>
       <button class="m-save" onclick="saveEvent()">Registrar evento</button>
@@ -249,6 +280,13 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- LIGHTBOX -->
+<div id="lightbox" onclick="closeLightbox()">
+  <button class="lb-close" onclick="closeLightbox()">✕</button>
+  <img id="lb-img" src="" alt="Foto ampliada">
+</div>
+
 <script src="app.js"></script>
 </body>
 </html>

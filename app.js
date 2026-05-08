@@ -406,30 +406,34 @@ function renderCard(ev) {
   const done  = ev.actions.filter(a => a.done).length;
   const total = ev.actions.length;
   const pct   = total ? Math.round(done/total*100) : 0;
+  const titulo = ev.titulo || ev.desc;
 
   const imgSrc = IMGS[ev.imgKey] || ev.imgData || '';
   const imgHtml = imgSrc
     ? `<div class="card-img-wrap">
-         <img class="card-img" src="${imgSrc}" alt="Foto evento ${ev.id}" loading="lazy">
-         <span class="card-img-label">Foto referencial<br>del evento</span>
+         <img class="card-img" src="${imgSrc}" alt="Foto evento ${ev.id}" loading="lazy"
+           onclick="openLightbox('${imgSrc.substring(0,50)}','${ev.id}')" title="Tocar para ampliar">
+         <span class="card-img-label">📷 Tocar foto<br>para ampliar</span>
        </div>`
     : '';
 
-  const actionsHtml = ev.actions.map(a => {
-    const ds = dateStatus(a.fecha);
-    const dc = DATE_COLOR[ds];
-    return `
-      <div class="action-row${a.done?' done':''}" style="background:${a.done?'#F8F8F7':eq.row}" onclick="toggleAction('${ev.id}','${a.id}')">
-        <div class="cb${a.done?' cb-done':''}">${a.done?'✓':''}</div>
-        <div class="action-body">
-          <div class="action-desc">${a.desc}</div>
-          <div class="action-meta">
-            <span class="action-resp">${a.resp}</span>
-            <span class="action-date" style="color:${dc}">${a.fecha||'Sin fecha'}</span>
-          </div>
-        </div>
-      </div>`;
-  }).join('');
+  const actionsHtml = ev.actions.length > 0
+    ? ev.actions.map(a => {
+        const ds = dateStatus(a.fecha);
+        const dc = DATE_COLOR[ds];
+        return `
+          <div class="action-row${a.done?' done':''}" style="background:${a.done?'#F8F8F7':eq.row}" onclick="toggleAction('${ev.id}','${a.id}')">
+            <div class="cb${a.done?' cb-done':''}">${a.done?'✓':''}</div>
+            <div class="action-body">
+              <div class="action-desc">${a.desc}</div>
+              <div class="action-meta">
+                <span class="action-resp">${a.resp}</span>
+                <span class="action-date" style="color:${dc}">${a.fecha||'Sin fecha'}</span>
+              </div>
+            </div>
+          </div>`;
+      }).join('')
+    : '<div style="font-size:12px;color:var(--g400);padding:8px 4px;text-align:center">Sin acciones registradas</div>';
 
   return `
     <div class="card" id="card-${ev.id}">
@@ -439,7 +443,8 @@ function renderCard(ev) {
             <span class="card-clas" style="color:${eq.text};background:${eq.bg}">${ev.clas}</span>
             <span class="card-id">ID ${ev.id} · ${ev.fecha}</span>
           </div>
-          <span class="card-desc">${ev.desc}</span>
+          <span class="card-titulo" style="font-size:12px;font-weight:700;color:var(--black);display:block;margin-bottom:2px">${titulo}</span>
+          ${ev.titulo ? `<span class="card-desc" style="font-size:11px;color:var(--g600)">${ev.desc}</span>` : ''}
         </div>
         <div class="card-right">
           <div class="mini-pbar"><div class="mini-fill" style="width:${pct}%;background:${eq.dot}"></div></div>
@@ -452,6 +457,24 @@ function renderCard(ev) {
         <div class="actions-list">${actionsHtml}</div>
       </div>
     </div>`;
+}
+
+// ─── LIGHTBOX ────────────────────────────────────────────────────────────────
+function openLightbox(_, evId) {
+  const ev = events.find(e => e.id === evId);
+  if (!ev) return;
+  const src = IMGS[ev.imgKey] || ev.imgData || '';
+  if (!src) return;
+  const lb = document.getElementById('lightbox');
+  document.getElementById('lb-img').src = src;
+  lb.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox() {
+  document.getElementById('lightbox').style.display = 'none';
+  document.getElementById('lb-img').src = '';
+  document.body.style.overflow = '';
 }
 
 // ─── INTERACCIONES ───────────────────────────────────────────────────────────
@@ -484,6 +507,7 @@ function toggleAction(evId, actionId) {
 function openModal() {
   document.getElementById('modal').style.display = 'flex';
   document.getElementById('m-id').value         = '';
+  document.getElementById('m-titulo').value     = '';
   document.getElementById('m-fecha').value      = '';
   document.getElementById('m-desc').value       = '';
   document.getElementById('m-cia-new').value    = '';
@@ -492,7 +516,45 @@ function openModal() {
   document.getElementById('m-foto-preview').style.display = 'none';
   document.getElementById('m-foto-preview').src = '';
   document.getElementById('m-foto-label').textContent = 'Tocar para agregar foto';
+  document.getElementById('m-acciones-list').innerHTML = '';
   window._newEventPhoto = null;
+  window._newActions = [];
+  renderModalAcciones();
+}
+
+function renderModalAcciones() {
+  const list = document.getElementById('m-acciones-list');
+  if (!window._newActions) window._newActions = [];
+  if (window._newActions.length === 0) {
+    list.innerHTML = '<div style="font-size:11px;color:var(--g400);padding:4px 0">Sin acciones agregadas aún</div>';
+    return;
+  }
+  list.innerHTML = window._newActions.map((a, i) => `
+    <div style="display:flex;align-items:flex-start;gap:8px;padding:7px 8px;background:var(--g50);border-radius:8px;margin-bottom:4px">
+      <div style="flex:1">
+        <div style="font-size:12px;color:var(--black);line-height:1.4">${a.desc}</div>
+        <div style="font-size:11px;color:var(--g400);margin-top:2px">${a.resp||'Sin responsable'} · ${a.fecha||'Sin fecha'}</div>
+      </div>
+      <button onclick="removeModalAccion(${i})" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--g300);padding:0;line-height:1">×</button>
+    </div>`).join('');
+}
+
+function addModalAccion() {
+  const desc = document.getElementById('m-ac-desc').value.trim();
+  const resp = document.getElementById('m-ac-resp').value.trim();
+  const fecha = document.getElementById('m-ac-fecha').value.trim();
+  if (!desc) { document.getElementById('m-ac-desc').focus(); return; }
+  if (!window._newActions) window._newActions = [];
+  window._newActions.push({ desc, resp, fecha });
+  document.getElementById('m-ac-desc').value  = '';
+  document.getElementById('m-ac-resp').value  = '';
+  document.getElementById('m-ac-fecha').value = '';
+  renderModalAcciones();
+}
+
+function removeModalAccion(i) {
+  window._newActions.splice(i, 1);
+  renderModalAcciones();
 }
 
 function handleFotoInput(input) {
@@ -524,33 +586,33 @@ function closeModal() {
 }
 
 function saveEvent() {
-  const id         = document.getElementById('m-id').value.trim();
-  const desc       = document.getElementById('m-desc').value.trim();
-  const fecha      = document.getElementById('m-fecha').value.trim();
-  const cia        = document.getElementById('m-cia-new').value.trim() || 'Sin especificar';
-  const equipoNew  = document.getElementById('m-equipo-new').value.trim() || 'E-NUEVO';
-  const operacion  = document.getElementById('m-operacion').value;
-  const fotoData   = window._newEventPhoto || null;
+  const id        = document.getElementById('m-id').value.trim();
+  const titulo    = document.getElementById('m-titulo').value.trim();
+  const desc      = document.getElementById('m-desc').value.trim();
+  const fecha     = document.getElementById('m-fecha').value.trim();
+  const cia       = document.getElementById('m-cia-new').value.trim() || 'Sin especificar';
+  const equipoNew = document.getElementById('m-equipo-new').value.trim() || 'E-NUEVO';
+  const operacion = document.getElementById('m-operacion').value;
+  const fotoData  = window._newEventPhoto || null;
+  const acciones  = (window._newActions || []).map((a, i) => ({
+    id: `${id}-${i}`, desc: a.desc, resp: a.resp||'—', fecha: a.fecha||'', done: false
+  }));
 
-  if (!id)   { alert('El ID del evento es obligatorio'); return; }
-  if (!desc) { alert('La descripción del evento es obligatoria'); return; }
+  if (!id)    { alert('El ID del evento es obligatorio'); return; }
+  if (!titulo){ alert('El título del evento es obligatorio'); return; }
+  if (!desc)  { alert('La descripción del evento es obligatoria'); return; }
   if (events.find(e => e.id === id)) { alert('Ya existe un evento con ese ID. Usá uno diferente.'); return; }
 
-  const newEvent = {
-    id,
-    imgKey: null,
-    imgData: fotoData,   // base64 de la foto subida
-    equipo: equipoNew,
-    cia,
-    operacion,
-    clas: 'FAC',
-    fecha: fecha || '—',
-    desc,
-    actions: []
-  };
+  events.push({
+    id, imgKey: null, imgData: fotoData,
+    equipo: equipoNew, cia, operacion,
+    clas: 'FAC', fecha: fecha || '—',
+    titulo, desc,
+    actions: acciones
+  });
 
-  events.push(newEvent);
   window._newEventPhoto = null;
+  window._newActions    = [];
   saveState();
   closeModal();
   renderAll();
