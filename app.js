@@ -53,7 +53,7 @@ function buildActions(evId, items) {
 }
 
 const DEFAULT_EVENTS = [
-  { id:'2344', imgKey:'2344', equipo:'E102', cia:'ENG', clas:'FAC', fecha:'01/09/2025',
+  { id:'2344', imgKey:'2344', equipo:'E102', cia:'ENG', operacion:'Pulling', clas:'FAC', fecha:'01/09/2025',
     desc:'Movimiento de contrapesos AIB — freno manual y traba mecánica sin actuar',
     actions: buildActions('2344', [
       { desc:'Revisión de ATS 61 "Colocar/Retirar cabeza de AIB" — verificación de consigna y traba mecánica', resp:'Trigo Gabriel', fecha:'16/09/2025' },
@@ -62,7 +62,7 @@ const DEFAULT_EVENTS = [
       { desc:'Implementación de formato CGC de ingreso/Entrega a locación remitido a company man', resp:'SAS CGC', fecha:'30/09/2025' },
     ])
   },
-  { id:'2375', imgKey:'2375', equipo:'E103', cia:'ENG', clas:'FAC', fecha:'06/10/2025',
+  { id:'2375', imgKey:'2375', equipo:'E103', cia:'ENG', operacion:'Pulling', clas:'FAC', fecha:'06/10/2025',
     desc:'Producto Econor ingresa en guante — irritación de piel en mano derecha',
     actions: buildActions('2375', [
       { desc:'Realizar Análisis de Riesgo para tarea de reacondicionamiento y limpieza de equipos', resp:'Pantanalli Pedro', fecha:'30/10/2025' },
@@ -70,7 +70,7 @@ const DEFAULT_EVENTS = [
       { desc:'Optimizar entrega mensual de guantes: 3 pares nitrilo alto impacto / 2 pares acrilo nitrilo / 2 pares vaqueta', resp:'Marcelo Inchausti', fecha:'30/10/2025' },
     ])
   },
-  { id:'2378', imgKey:'2378', equipo:'E103', cia:'ENG', clas:'FAC', fecha:'10/10/2025',
+  { id:'2378', imgKey:'2378', equipo:'E103', cia:'ENG', operacion:'Pulling', clas:'FAC', fecha:'10/10/2025',
     desc:'Operario siente dolor en hombro derecho al posicionar escalera de acceso a tráiler',
     actions: buildActions('2378', [
       { desc:'Modificar posición de la escalera, permitiendo buena postura durante la colocación', resp:'Arguelles Enrique (Jefe Mant.)', fecha:'04/11/2025' },
@@ -78,7 +78,7 @@ const DEFAULT_EVENTS = [
       { desc:'Incorporar evaluación específica de riesgos del montaje de periféricos en el ATS del equipo', resp:'Pedro Pantanalli Sup. SMSC', fecha:'04/11/2025' },
     ])
   },
-  { id:'2388', imgKey:'2388', equipo:'E102', cia:'ENG', clas:'FAC', fecha:'20/10/2025',
+  { id:'2388', imgKey:'2388', equipo:'E102', cia:'ENG', operacion:'Pulling', clas:'FAC', fecha:'20/10/2025',
     desc:'Operario golpea codo izquierdo contra el vástago del economizador al elevar elevador de v/b',
     actions: buildActions('2388', [
       { desc:'Realización de ATS — Armado de Boca de Pozo', resp:'Lanaro Nicolas (SMSC)', fecha:'' },
@@ -86,7 +86,7 @@ const DEFAULT_EVENTS = [
       { desc:'Lectura y revisión de procedimiento operativo con ratigan (Estrella)', resp:'Marcelo Inchausty (Gerente Op)', fecha:'' },
     ])
   },
-  { id:'2408', imgKey:'2408', equipo:'E101', cia:'ENG', clas:'FAC', fecha:'30/10/2025',
+  { id:'2408', imgKey:'2408', equipo:'E101', cia:'ENG', operacion:'Pulling', clas:'FAC', fecha:'30/10/2025',
     desc:'Latigazo de vástago al liberar el elevador — operario con dolor intercostal derecho',
     actions: buildActions('2408', [
       { desc:'Charla con los tres turnos sobre disciplina operativa y uso de herramientas adecuadas para la tarea', resp:'Jefe de campo', fecha:'22/11/2025' },
@@ -96,7 +96,7 @@ const DEFAULT_EVENTS = [
       { desc:'Instalación de cámaras de video en el equipo', resp:'Gte. operaciones', fecha:'15/12/2025' },
     ])
   },
-  { id:'2419', imgKey:'2419', equipo:'E102', cia:'ENG', clas:'FAC', fecha:'10/11/2025',
+  { id:'2419', imgKey:'2419', equipo:'E102', cia:'ENG', operacion:'Pulling', clas:'FAC', fecha:'10/11/2025',
     desc:'Inserto de elevador de v/b se parte al extraerlo — golpe en nariz de operario',
     actions: buildActions('2419', [
       { desc:'Realización de ATS para reparación de herramientas', resp:'Lanaro Nicolas', fecha:'15/11/2025' },
@@ -104,7 +104,7 @@ const DEFAULT_EVENTS = [
       { desc:'Refuerzo de detención de tareas', resp:'Lanaro Nicolas', fecha:'18/11/2025' },
     ])
   },
-  { id:'2423', imgKey:'2423', equipo:'E103', cia:'ENG', clas:'FAC', fecha:'14/11/2025',
+  { id:'2423', imgKey:'2423', equipo:'E103', cia:'ENG', operacion:'Pulling', clas:'FAC', fecha:'14/11/2025',
     desc:'Operario se resbala y cae — golpea abdomen con vástago de cierre total y rodilla izquierda con manguerote',
     actions: buildActions('2423', [
       { desc:'Refuerzo en implementación de prácticas seguras de trabajo y utilización del podio cuando la actividad lo requiera', resp:'SMSC/Operación', fecha:'28/11/2025' },
@@ -112,7 +112,7 @@ const DEFAULT_EVENTS = [
       { desc:'Restructuración del personal del turno implicado', resp:'Operación', fecha:'03/11/2025' },
     ])
   },
-  { id:'2431A', imgKey:'2431', equipo:'E103', cia:'ENG', clas:'FAC HIPO', fecha:'19/11/2025',
+  { id:'2431A', imgKey:'2431', equipo:'E103', cia:'ENG', operacion:'Pulling', clas:'FAC HIPO', fecha:'19/11/2025',
     desc:'FAC HIPO — Cañería golpea rostro de operario durante maniobra de profundizado de tren de rotación',
     actions: buildActions('2431A', [
       { desc:'Reasignación del personal del turno involucrado a otras cuadrillas', resp:'RR.HH.', fecha:'26/12/2025' },
@@ -124,7 +124,7 @@ const DEFAULT_EVENTS = [
       { desc:'Implementación de 4ta cámara de video orientada al recorrido del aparejo', resp:'Gte. Operaciones', fecha:'30/01/2026' },
     ])
   },
-  { id:'2451', imgKey:'2451', equipo:'E103', cia:'ENG', clas:'FAC', fecha:'04/12/2025',
+  { id:'2451', imgKey:'2451', equipo:'E103', cia:'ENG', operacion:'Pulling', clas:'FAC', fecha:'04/12/2025',
     desc:'V/B se escapa de la mano y golpea empeine del pie — operario no reporta inmediatamente',
     actions: buildActions('2451', [
       { desc:'Refuerzo de maniobras coordinadas, manteniendo atención y enfoque — aplicando detención de tarea', resp:'SMSC/Operación', fecha:'31/12/2025' },
@@ -132,7 +132,7 @@ const DEFAULT_EVENTS = [
       { desc:'Evaluar rendición de cuenta — comunicar de manera inmediata cualquier evento', resp:'RRLL', fecha:'31/12/2025' },
     ])
   },
-  { id:'2453', imgKey:'2453', equipo:'E102', cia:'ENG', clas:'FAC', fecha:'05/12/2025',
+  { id:'2453', imgKey:'2453', equipo:'E102', cia:'ENG', operacion:'Pulling', clas:'FAC', fecha:'05/12/2025',
     desc:'Columna de tubing devuelve torque — llave stilson golpea brazo izquierdo del operario',
     actions: buildActions('2453', [
       { desc:'Actualizar procedimiento operativo con la nueva forma de fijación del ancla detalladamente', resp:'Operaciones/SMSC', fecha:'18/12/2025' },
@@ -140,7 +140,7 @@ const DEFAULT_EVENTS = [
       { desc:'Realizar charlas operativas y disciplinarias con los mandos medios (JQ – ET – MQ)', resp:'Operaciones', fecha:'28/12/2025' },
     ])
   },
-  { id:'2466', imgKey:'2466', equipo:'E103', cia:'ENG', clas:'MATERIAL', fecha:'22/12/2025',
+  { id:'2466', imgKey:'2466', equipo:'E103', cia:'ENG', operacion:'Pulling', clas:'MATERIAL', fecha:'22/12/2025',
     desc:'MATERIAL — Rotura del brazo de retenida de cabeza de inyección — enrolla mangueras y cables',
     actions: buildActions('2466', [
       { desc:'Desafectar personal involucrado y evaluar rendición de cuentas acorde a responsabilidad directa', resp:'RR.LL.', fecha:'' },
@@ -151,7 +151,7 @@ const DEFAULT_EVENTS = [
       { desc:'Análisis de material de brazo de retenida para determinar causa del daño', resp:'Ingeniería', fecha:'' },
     ])
   },
-  { id:'2498', imgKey:'2498', equipo:'E103', cia:'ENG', clas:'Cuasi accidente', fecha:'17/02/2026',
+  { id:'2498', imgKey:'2498', equipo:'E103', cia:'ENG', operacion:'Pulling', clas:'Cuasi accidente', fecha:'17/02/2026',
     desc:'Apertura de BOP genera descompresión con ruido — zumbido en oído del ayudante WL Superior',
     actions: buildActions('2498', [
       { desc:'Aplicar procedimiento de rendición de cuentas al personal respecto a su responsabilidad en el evento', resp:'RR.HH.', fecha:'15/03/2026' },
@@ -162,7 +162,7 @@ const DEFAULT_EVENTS = [
       { desc:'Reunión con Seguridad de Superior para unificar evaluaciones de riesgo en operaciones de Wire Line', resp:'Sup. SMSC', fecha:'' },
     ])
   },
-  { id:'2503', imgKey:'2503', equipo:'E101', cia:'ENG', clas:'FAC', fecha:'23/02/2026',
+  { id:'2503', imgKey:'2503', equipo:'E101', cia:'ENG', operacion:'Pulling', clas:'FAC', fecha:'23/02/2026',
     desc:'Operario boca de pozo se pincha con esquirla de tbg — fragmento en dedo medio de mano izquierda',
     actions: buildActions('2503', [
       { desc:'Actualización de ATS (Bajada y sacada de TBG en single)', resp:'Lanaro Nicolas (SMSC)', fecha:'20/03/2026' },
@@ -171,7 +171,7 @@ const DEFAULT_EVENTS = [
       { desc:'Evaluar propuesta sobre cambio de guantes de grado de perforación 1 a 3', resp:'Marcelo Inchausti / José Galone', fecha:'20/03/2026' },
     ])
   },
-  { id:'2431B', imgKey:'2521', equipo:'E101', cia:'ENG', clas:'FAC', fecha:'10/03/2026',
+  { id:'2431B', imgKey:'2521', equipo:'E101', cia:'ENG', operacion:'Pulling', clas:'FAC', fecha:'10/03/2026',
     desc:'Operario aprisiona dedo índice entre cuplas de TBG al acomodar en caballete',
     actions: buildActions('2431B', [
       { desc:'Revisión de ATS — modificar y agregar el uso de jalador para acomodamiento final de los TBG', resp:'Lanaro Nicolas (SMSC)', fecha:'' },
@@ -180,7 +180,7 @@ const DEFAULT_EVENTS = [
       { desc:'Evaluar rendición de cuenta con el personal involucrado', resp:'Laborales', fecha:'' },
     ])
   },
-  { id:'2531', imgKey:'2531', equipo:'E102', cia:'ENG', clas:'MATERIAL', fecha:'18/03/2026',
+  { id:'2531', imgKey:'2531', equipo:'E102', cia:'ENG', operacion:'Pulling', clas:'MATERIAL', fecha:'18/03/2026',
     desc:'MATERIAL — Se desprende brazo de retenida de cabeza Bowen — corta el perno de sujeción',
     actions: buildActions('2531', [
       { desc:'Colocar ojal para la retenida del brazo', resp:'Operaciones', fecha:'22/03/2026' },
@@ -189,7 +189,7 @@ const DEFAULT_EVENTS = [
       { desc:'Instalar pernos originales americanos de acero 41 40', resp:'Compra', fecha:'15/06/2026' },
     ])
   },
-  { id:'2534', imgKey:'2534', equipo:'E103', cia:'ENG', clas:'FAC HIPO', fecha:'20/03/2026',
+  { id:'2534', imgKey:'2534', equipo:'E103', cia:'ENG', operacion:'Pulling', clas:'FAC HIPO', fecha:'20/03/2026',
     desc:'FAC HIPO — Rebote de Tbg sobre cuna — caída lateral desde estiba golpea a operario',
     actions: buildActions('2534', [
       { desc:'Aplicar procedimiento de rendición de cuentas al personal involucrado en función de su responsabilidad', resp:'RR.LL.', fecha:'' },
@@ -202,12 +202,13 @@ const DEFAULT_EVENTS = [
 ];
 
 // ─── ESTADO ──────────────────────────────────────────────────────────────────
-const STORAGE_KEY = 'eng_pulling_v2';
+const STORAGE_KEY = 'eng_pulling_v3';
 const META_KEY    = 'eng_pulling_meta_v2';
-let events        = [];
-let currentFilter = 'todos';
-let currentCia    = 'todas';
-let reviewMeta    = { fecha: '', relevador: '' };
+let events           = [];
+let currentFilter    = 'todos';
+let currentCia       = 'todas';
+let currentOperacion = 'todas';
+let reviewMeta       = { fecha: '', relevador: '' };
 
 function loadState() {
   try {
@@ -264,6 +265,7 @@ function renderAll() {
   document.getElementById('prog-label').textContent = `${st.done} de ${st.total} acciones completadas`;
   document.getElementById('topbar-pct').textContent  = st.pct + '%';
 
+  renderOperacionTabs();
   renderCiaTabs();
   renderFilterChips();
   renderEvents(filtered);
@@ -272,11 +274,34 @@ function renderAll() {
 function getFilteredEvents() {
   return events.filter(ev => {
     const ciaOk = currentCia === 'todas' || (ev.cia||'ENG') === currentCia;
+    const opOk  = currentOperacion === 'todas' || (ev.operacion||'Pulling') === currentOperacion;
     const eqOk  = currentFilter === 'todos'      ? true
                 : currentFilter === 'pendientes'  ? ev.actions.some(a => !a.done)
                 : ev.equipo === currentFilter;
-    return ciaOk && eqOk;
+    return ciaOk && opOk && eqOk;
   });
+}
+
+// ─── TABS DE OPERACIÓN ───────────────────────────────────────────────────────
+function renderOperacionTabs() {
+  const ops = ['todas', 'Perforación', 'Workover', 'Pulling'];
+  const icons = { 'todas':'🔍', 'Perforación':'⛏️', 'Workover':'🔧', 'Pulling':'⚙️' };
+  const wrap = document.getElementById('op-tabs');
+  if (!wrap) return;
+  wrap.innerHTML = ops.map(op => {
+    const cnt = op === 'todas' ? events.length : events.filter(e=>(e.operacion||'Pulling')===op).length;
+    return `<button class="op-tab${currentOperacion===op?' active':''}" onclick="setOperacion('${op}')">
+      ${icons[op]} ${op==='todas'?'Todas':op}
+      <span class="op-count">${cnt}</span>
+    </button>`;
+  }).join('');
+}
+
+function setOperacion(op) {
+  currentOperacion = op;
+  currentFilter = 'todos';
+  currentCia = 'todas';
+  renderAll();
 }
 
 // ─── TABS DE COMPAÑÍA ────────────────────────────────────────────────────────
@@ -307,7 +332,7 @@ function renderFilterChips() {
     { key:'todos', label:'Todos', dot:'#888', count: base.length },
     ...equipos.map(eq => ({
       key: eq,
-      label: `${(base.find(e=>e.equipo===eq)?.cia||'ENG')} - ${eq}`,
+      label: `${(base.find(e=>e.equipo===eq)?.cia||'ENG')} · ${eq}`,
       dot: getEqColor(eq).dot,
       count: base.filter(e=>e.equipo===eq).length
     })),
@@ -382,7 +407,7 @@ function renderCard(ev) {
   const total = ev.actions.length;
   const pct   = total ? Math.round(done/total*100) : 0;
 
-  const imgSrc = IMGS[ev.imgKey] || '';
+  const imgSrc = IMGS[ev.imgKey] || ev.imgData || '';
   const imgHtml = imgSrc
     ? `<div class="card-img-wrap">
          <img class="card-img" src="${imgSrc}" alt="Foto evento ${ev.id}" loading="lazy">
@@ -458,10 +483,30 @@ function toggleAction(evId, actionId) {
 // ─── MODAL NUEVO EVENTO ──────────────────────────────────────────────────────
 function openModal() {
   document.getElementById('modal').style.display = 'flex';
-  document.getElementById('m-id').value    = '';
-  document.getElementById('m-fecha').value = '';
-  document.getElementById('m-desc').value  = '';
-  renderEquipoOptions();
+  document.getElementById('m-id').value         = '';
+  document.getElementById('m-fecha').value      = '';
+  document.getElementById('m-desc').value       = '';
+  document.getElementById('m-cia-new').value    = '';
+  document.getElementById('m-equipo-new').value = '';
+  document.getElementById('m-operacion').value  = 'Pulling';
+  document.getElementById('m-foto-preview').style.display = 'none';
+  document.getElementById('m-foto-preview').src = '';
+  document.getElementById('m-foto-label').textContent = 'Tocar para agregar foto';
+  window._newEventPhoto = null;
+}
+
+function handleFotoInput(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const preview = document.getElementById('m-foto-preview');
+    preview.src = e.target.result;
+    preview.style.display = 'block';
+    document.getElementById('m-foto-label').textContent = '📷 Foto cargada — tocar para cambiar';
+    window._newEventPhoto = e.target.result;
+  };
+  reader.readAsDataURL(file);
 }
 
 function renderEquipoOptions() {
@@ -479,30 +524,37 @@ function closeModal() {
 }
 
 function saveEvent() {
-  const equipo = document.getElementById('m-equipo').value.trim();
-  const id     = document.getElementById('m-id').value.trim();
-  const fecha  = document.getElementById('m-fecha').value.trim();
-  const desc   = document.getElementById('m-desc').value.trim();
+  const id         = document.getElementById('m-id').value.trim();
+  const desc       = document.getElementById('m-desc').value.trim();
+  const fecha      = document.getElementById('m-fecha').value.trim();
+  const cia        = document.getElementById('m-cia-new').value.trim() || 'Sin especificar';
+  const equipoNew  = document.getElementById('m-equipo-new').value.trim() || 'E-NUEVO';
+  const operacion  = document.getElementById('m-operacion').value;
+  const fotoData   = window._newEventPhoto || null;
 
   if (!id)   { alert('El ID del evento es obligatorio'); return; }
   if (!desc) { alert('La descripción del evento es obligatoria'); return; }
-  if (events.find(e => e.id === id)) { alert('Ya existe un evento con ese ID. Usá un ID diferente.'); return; }
-
-  // Heredar compañía del equipo seleccionado
-  const refEv = events.find(e => e.equipo === equipo);
-  const cia   = refEv ? (refEv.cia || 'ENG') : 'ENG';
+  if (events.find(e => e.id === id)) { alert('Ya existe un evento con ese ID. Usá uno diferente.'); return; }
 
   const newEvent = {
-    id, imgKey: null, equipo, cia, clas:'FAC', fecha: fecha || '—',
+    id,
+    imgKey: null,
+    imgData: fotoData,   // base64 de la foto subida
+    equipo: equipoNew,
+    cia,
+    operacion,
+    clas: 'FAC',
+    fecha: fecha || '—',
     desc,
     actions: []
   };
 
   events.push(newEvent);
+  window._newEventPhoto = null;
   saveState();
   closeModal();
   renderAll();
-  showToast('Evento agregado — abrilo para agregar acciones');
+  showToast('Evento registrado correctamente');
 }
 
 // ─── TOAST ───────────────────────────────────────────────────────────────────
@@ -552,9 +604,11 @@ function exportPDF() {
       </tr>${evRows}`;
     }).join('');
 
+    const opLabel = g.events[0]?.operacion || 'Pulling';
     return `<tr>
       <td colspan="4" style="padding:9px 10px;background:${eq.bg};border-top:3px solid ${eq.dot}">
         <span style="font-size:11px;font-weight:700;color:${eq.text}">${g.cia} · ${g.equipo}</span>
+        <span style="font-size:10px;color:${eq.text};margin-left:8px">${opLabel}</span>
         <span style="float:right;font-size:10px;color:${eq.text}">${gSt.done}/${gSt.total} completadas · ${gSt.pct}%</span>
       </td>
     </tr>${evRows}`;

@@ -120,6 +120,20 @@
     .m-save{flex:2;padding:12px;background:var(--black);color:var(--white);border:none;border-radius:11px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer}
     .m-save:active{background:var(--teal-dk)}
 
+    /* ── OP TABS ── */
+    .op-tabs{display:flex;gap:5px;overflow-x:auto;padding-bottom:4px;margin-bottom:8px;scrollbar-width:none}
+    .op-tabs::-webkit-scrollbar{display:none}
+    .op-tab{display:flex;align-items:center;gap:5px;white-space:nowrap;padding:5px 12px;border-radius:8px;border:1px solid var(--g200);background:var(--white);cursor:pointer;font-size:12px;color:var(--g600);font-family:inherit;font-weight:500}
+    .op-tab.active{background:var(--black);border-color:var(--black);color:var(--white)}
+    .op-count{font-size:10px;background:var(--g100);padding:1px 5px;border-radius:8px;color:var(--g600);font-variant-numeric:tabular-nums}
+    .op-tab.active .op-count{background:rgba(255,255,255,.15);color:var(--white)}
+    /* ── FOTO UPLOAD ── */
+    .foto-area{border:1.5px dashed var(--g200);border-radius:10px;padding:14px;text-align:center;cursor:pointer;background:var(--g50);position:relative;overflow:hidden}
+    .foto-area:active{background:var(--g100)}
+    .foto-area input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+    .foto-icon{font-size:24px;margin-bottom:4px}
+    .foto-label{font-size:12px;color:var(--g400);display:block}
+    #m-foto-preview{width:100%;max-height:100px;object-fit:cover;border-radius:7px;display:none;margin-bottom:6px}
     /* ── TOAST ── */
     .toast{position:fixed;bottom:calc(var(--safe-bot) + 82px);left:50%;transform:translateX(-50%) translateY(16px);background:var(--black);color:var(--white);padding:9px 18px;border-radius:20px;font-size:13px;opacity:0;transition:all .25s;pointer-events:none;z-index:300;white-space:nowrap}
     .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -159,6 +173,7 @@
     <button class="export-btn" onclick="exportPDF()">📄 Exportar PDF</button>
     <button class="export-btn" onclick="exportCSV()">📊 Exportar Excel</button>
   </div>
+  <div class="op-tabs" id="op-tabs"></div>
   <div class="cia-tabs" id="cia-tabs"></div>
   <div class="filters" id="filters"></div>
   <div class="section-label" id="section-count"></div>
@@ -175,11 +190,16 @@
     <div class="modal-title">Nuevo evento no deseado</div>
     <div class="modal-subtitle">Completá los datos del evento para registrarlo</div>
 
-    <!-- ID -->
-    <div class="m-field">
-      <label class="m-label" for="m-id">ID del evento</label>
-      <input class="m-input" id="m-id" type="text" placeholder="Ej: 2545">
-      <div class="m-hint">Número de registro del sistema de reportes</div>
+    <!-- ID y FECHA -->
+    <div class="m-row">
+      <div class="m-field">
+        <label class="m-label" for="m-id">ID del evento</label>
+        <input class="m-input" id="m-id" type="text" placeholder="Ej: 2545">
+      </div>
+      <div class="m-field">
+        <label class="m-label" for="m-fecha">Fecha</label>
+        <input class="m-input" id="m-fecha" type="text" placeholder="dd/mm/aaaa">
+      </div>
     </div>
 
     <!-- DESCRIPCIÓN -->
@@ -188,17 +208,37 @@
       <textarea class="m-textarea" id="m-desc" placeholder="¿Qué ocurrió? Describí brevemente el evento no deseado"></textarea>
     </div>
 
-    <!-- FECHA -->
-    <div class="m-field">
-      <label class="m-label" for="m-fecha">Fecha del evento</label>
-      <input class="m-input" id="m-fecha" type="text" placeholder="dd/mm/aaaa">
+    <!-- CONTRATISTA y EQUIPO -->
+    <div class="m-row">
+      <div class="m-field">
+        <label class="m-label" for="m-cia-new">Contratista</label>
+        <input class="m-input" id="m-cia-new" type="text" placeholder="Nombre de la empresa">
+      </div>
+      <div class="m-field">
+        <label class="m-label" for="m-equipo-new">Equipo</label>
+        <input class="m-input" id="m-equipo-new" type="text" placeholder="Ej: E101, RIG-5...">
+      </div>
     </div>
 
-    <!-- EQUIPO (vinculación) -->
+    <!-- TIPO DE OPERACIÓN -->
     <div class="m-field">
-      <label class="m-label" for="m-equipo">Vincular a equipo</label>
-      <select class="m-select" id="m-equipo"></select>
-      <div class="m-hint">El evento quedará agrupado bajo el equipo seleccionado</div>
+      <label class="m-label">Tipo de operación</label>
+      <select class="m-select" id="m-operacion">
+        <option value="Pulling">⚙️ Pulling</option>
+        <option value="Workover">🔧 Workover</option>
+        <option value="Perforación">⛏️ Perforación</option>
+      </select>
+    </div>
+
+    <!-- FOTO -->
+    <div class="m-field">
+      <label class="m-label">Foto del evento</label>
+      <div class="foto-area" onclick="document.getElementById('m-foto-input').click()">
+        <img id="m-foto-preview" src="" alt="preview">
+        <div class="foto-icon">📷</div>
+        <span class="foto-label" id="m-foto-label">Tocar para agregar foto</span>
+        <input type="file" id="m-foto-input" accept="image/*" capture="environment" onchange="handleFotoInput(this)" style="display:none">
+      </div>
     </div>
 
     <div class="m-actions">
