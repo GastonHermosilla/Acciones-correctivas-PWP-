@@ -1,16 +1,8 @@
-// sw.js — Service Worker para funcionamiento offline
 const CACHE = 'eng-pulling-v3';
-const ASSETS = [
-  './',
-  './index.html',
-  './app.js',
-  './manifest.json',
-];
+const ASSETS = ['./', './index.html', './app.js', './manifest.json'];
 
 self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(ASSETS))
-  );
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
   self.skipWaiting();
 });
 
