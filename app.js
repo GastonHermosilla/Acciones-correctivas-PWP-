@@ -422,15 +422,16 @@ function renderCard(ev) {
         const ds = dateStatus(a.fecha);
         const dc = DATE_COLOR[ds];
         return `
-          <div class="action-row${a.done?' done':''}" style="background:${a.done?'#F8F8F7':eq.row}" onclick="toggleAction('${ev.id}','${a.id}')">
-            <div class="cb${a.done?' cb-done':''}">${a.done?'✓':''}</div>
-            <div class="action-body">
+          <div class="action-row${a.done?' done':''}" style="background:${a.done?'#F8F8F7':eq.row}">
+            <div class="cb${a.done?' cb-done':''}" onclick="toggleAction('${ev.id}','${a.id}')">${a.done?'✓':''}</div>
+            <div class="action-body" onclick="toggleAction('${ev.id}','${a.id}')">
               <div class="action-desc">${a.desc}</div>
               <div class="action-meta">
                 <span class="action-resp">${a.resp}</span>
                 <span class="action-date" style="color:${dc}">${a.fecha||'Sin fecha'}</span>
               </div>
             </div>
+            <button class="btn-del-ac" onclick="deleteAction('${ev.id}','${a.id}',event)" title="Eliminar acción">×</button>
           </div>`;
       }).join('')
     : '<div style="font-size:12px;color:var(--g400);padding:8px 4px;text-align:center">Sin acciones registradas</div>';
@@ -449,6 +450,7 @@ function renderCard(ev) {
         <div class="card-right">
           <div class="mini-pbar"><div class="mini-fill" style="width:${pct}%;background:${eq.dot}"></div></div>
           <span class="card-count">${done}/${total}</span>
+          <button class="btn-del-ev" onclick="deleteEvent('${ev.id}',event)" title="Eliminar evento">🗑</button>
           <span class="chevron" id="chev-${ev.id}">›</span>
         </div>
       </div>
@@ -501,6 +503,34 @@ function toggleAction(evId, actionId) {
     const chev = document.getElementById('chev-'+evId);
     if (chev) chev.style.transform = 'rotate(90deg)';
   }
+}
+
+function deleteAction(evId, actionId, e) {
+  e.stopPropagation();
+  if (!confirm('¿Eliminar esta acción correctiva?')) return;
+  const ev = events.find(e => e.id === evId);
+  if (!ev) return;
+  ev.actions = ev.actions.filter(a => a.id !== actionId);
+  saveState();
+  renderAll();
+  // Mantener tarjeta abierta
+  const body = document.getElementById('body-'+evId);
+  if (body) {
+    body.style.display = 'block';
+    const chev = document.getElementById('chev-'+evId);
+    if (chev) chev.style.transform = 'rotate(90deg)';
+  }
+}
+
+function deleteEvent(evId, e) {
+  e.stopPropagation();
+  const ev = events.find(e => e.id === evId);
+  if (!ev) return;
+  const titulo = ev.titulo || ev.desc;
+  if (!confirm(`¿Eliminar el evento "${titulo}"?\n\nEsta acción no se puede deshacer.`)) return;
+  events = events.filter(e => e.id !== evId);
+  saveState();
+  renderAll();
 }
 
 // ─── MODAL NUEVO EVENTO ──────────────────────────────────────────────────────
@@ -714,10 +744,17 @@ function exportPDF() {
   <div class="footer">Generado por App ENG Pulling CGC · ${new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'})}</div>
   </body></html>`;
 
-  const win = window.open('', '_blank');
-  win.document.write(html);
-  win.document.close();
-  setTimeout(() => win.print(), 500);
+  // Método robusto: Blob URL para evitar bloqueo de popups en móvil
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `Reporte_ENG_Pulling_${(reviewMeta.fecha||new Date().toISOString().split('T')[0]).replace(/[-\/]/g,'')}.html`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 3000);
+  showToast('Reporte descargado — abrilo y usá Imprimir para PDF');
 }
 
 // ─── EXPORTAR CSV ────────────────────────────────────────────────────────────
