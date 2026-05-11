@@ -981,7 +981,7 @@ function buildExcel(filtered, fecha, relevador, lugar, st) {
       if (ws[addr]) ws[addr].s = { font:{bold:true,color:{rgb:C.white},sz:9}, fill:{patternType:'solid',fgColor:{rgb:eqDot}}, alignment:{horizontal:'center'} };
     });
 
-    ws['!ref'] = XLSX.utils.encode_range({s:{r:0,c:0},{r:rowIdx,c:HDRS.length-1}});
+    ws['!ref'] = XLSX.utils.encode_range({s:{r:0,c:0},e:{r:rowIdx,c:HDRS.length-1}});
     ws['!cols'] = COL_W.map(w=>({wch:w}));
     ws['!rows'] = [{hpt:24},{hpt:16},{hpt:22}];
 
@@ -1014,7 +1014,7 @@ function buildExcel(filtered, fecha, relevador, lugar, st) {
         else wsR[addr].s = cellStyle(i%2===0?C.white:'F9F9F8',C.black);
       });
     });
-    wsR['!ref'] = XLSX.utils.encode_range({s:{r:0,c:0},{r:2+allDataRows.length,c:HDRS.length-1}});
+    wsR['!ref'] = XLSX.utils.encode_range({s:{r:0,c:0},e:{r:2+allDataRows.length,c:HDRS.length-1}});
     wsR['!cols'] = COL_W.map(w=>({wch:w}));
     XLSX.utils.book_append_sheet(wb, wsR, 'RESUMEN');
   }
