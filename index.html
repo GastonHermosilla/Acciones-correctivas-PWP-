@@ -146,6 +146,11 @@
     .add-ac-cancel{flex:1;padding:8px;border:1px solid var(--g200);border-radius:8px;background:var(--white);font-size:12px;font-family:inherit;cursor:pointer;color:var(--g600)}
     .add-ac-save{flex:2;padding:8px;background:var(--black);color:var(--white);border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
     .add-ac-save:active{background:var(--teal-dk)}
+    /* ── OBSERVACIONES ── */
+    .obs-row{padding:4px 8px 6px 38px;border-radius:0 0 7px 7px;border-top:1px dashed var(--g100)}
+    .obs-input{width:100%;border:none;background:transparent;font-size:11px;color:var(--g600);font-family:inherit;resize:none;min-height:30px;line-height:1.4;outline:none;padding:2px 0}
+    .obs-input::placeholder{color:var(--g300)}
+    .obs-input:focus{color:var(--black)}
     /* ── BOTONES ELIMINAR ── */
     .btn-del-ev{background:none;border:none;cursor:pointer;font-size:14px;padding:2px 4px;color:var(--g300);border-radius:5px;line-height:1;transition:color .15s,background .15s}
     .btn-del-ev:active{color:var(--red);background:#FEE2E2}
@@ -191,7 +196,11 @@
       <label class="meta-label" for="review-by">Relevado por</label>
       <input class="meta-input" id="review-by" type="text" placeholder="Nombre del relevador">
     </div>
-    <div class="meta-field" style="max-width:145px">
+    <div class="meta-field">
+      <label class="meta-label" for="review-lugar">Lugar</label>
+      <input class="meta-input" id="review-lugar" type="text" placeholder="Locación / área">
+    </div>
+    <div class="meta-field" style="max-width:130px">
       <label class="meta-label" for="review-date">Fecha</label>
       <input class="meta-input" id="review-date" type="date">
     </div>

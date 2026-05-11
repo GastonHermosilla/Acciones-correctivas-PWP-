@@ -1,5 +1,5 @@
 // sw.js — Service Worker para funcionamiento offline
-const CACHE = 'eng-pulling-v7';
+const CACHE = 'eng-pulling-v8';
 const ASSETS = [
   './',
   './index.html',

@@ -208,7 +208,7 @@ let events           = [];
 let currentFilter    = 'todos';
 let currentCia       = 'todas';
 let currentOperacion = 'todas';
-let reviewMeta       = { fecha: '', relevador: '' };
+let reviewMeta       = { fecha: '', relevador: '', lugar: '' };
 
 function loadState() {
   try {
@@ -252,6 +252,7 @@ function renderAll() {
   // Guardar meta
   reviewMeta.fecha     = document.getElementById('review-date').value || '';
   reviewMeta.relevador = document.getElementById('review-by').value || '';
+  reviewMeta.lugar     = document.getElementById('review-lugar') ? document.getElementById('review-lugar').value || '' : '';
   saveState();
 
   const filtered = getFilteredEvents();
@@ -421,17 +422,23 @@ function renderCard(ev) {
     ? ev.actions.map(a => {
         const ds = dateStatus(a.fecha);
         const dc = DATE_COLOR[ds];
+        const obsId = 'obs-'+ev.id+'-'+a.id;
         return `
-          <div class="action-row${a.done?' done':''}" style="background:${a.done?'#F8F8F7':eq.row}">
-            <div class="cb${a.done?' cb-done':''}" onclick="toggleAction('${ev.id}','${a.id}')">${a.done?'✓':''}</div>
-            <div class="action-body" onclick="toggleAction('${ev.id}','${a.id}')">
-              <div class="action-desc">${a.desc}</div>
-              <div class="action-meta">
-                <span class="action-resp">${a.resp}</span>
-                <span class="action-date" style="color:${dc}">${a.fecha||'Sin fecha'}</span>
+          <div class="action-wrap" style="margin-bottom:3px">
+            <div class="action-row${a.done?' done':''}" style="background:${a.done?'#F8F8F7':eq.row};margin-bottom:0;border-radius:7px 7px 0 0">
+              <div class="cb${a.done?' cb-done':''}" onclick="toggleAction('${ev.id}','${a.id}')">${a.done?'✓':''}</div>
+              <div class="action-body" onclick="toggleAction('${ev.id}','${a.id}')">
+                <div class="action-desc">${a.desc}</div>
+                <div class="action-meta">
+                  <span class="action-resp">${a.resp}</span>
+                  <span class="action-date" style="color:${dc}">${a.fecha||'Sin fecha'}</span>
+                </div>
               </div>
+              <button class="btn-del-ac" onclick="deleteAction('${ev.id}','${a.id}',event)" title="Eliminar acción">×</button>
             </div>
-            <button class="btn-del-ac" onclick="deleteAction('${ev.id}','${a.id}',event)" title="Eliminar acción">×</button>
+            <div class="obs-row" style="background:${a.done?'#F5F5F4':'#FAFAF9'}">
+              <textarea class="obs-input" id="${obsId}" placeholder="Observaciones..." onblur="saveObservacion('${ev.id}','${a.id}')">${a.obs||''}</textarea>
+            </div>
           </div>`;
       }).join('')
     : '<div style="font-size:12px;color:var(--g400);padding:8px 4px;text-align:center">Sin acciones registradas</div>';
@@ -534,6 +541,18 @@ function deleteAction(evId, actionId, e) {
     const chev = document.getElementById('chev-'+evId);
     if (chev) chev.style.transform = 'rotate(90deg)';
   }
+}
+
+function saveObservacion(evId, actionId) {
+  const input = document.getElementById('obs-'+evId+'-'+actionId);
+  if (!input) return;
+  const ev = events.find(e => e.id === evId);
+  if (!ev) return;
+  const ac = ev.actions.find(a => a.id === actionId);
+  if (!ac) return;
+  ac.obs = input.value;
+  saveState();
+  showToast('Observación guardada');
 }
 
 function showAddAction(evId) {
@@ -820,26 +839,147 @@ function closeReport() {
 // ─── EXPORTAR CSV ────────────────────────────────────────────────────────────
 function exportCSV() {
   const fecha     = reviewMeta.fecha     || new Date().toISOString().split('T')[0];
-  const relevador = reviewMeta.relevador || '';
+  const relevador = reviewMeta.relevador || 'Sin especificar';
+  const lugar     = reviewMeta.lugar     || 'Sin especificar';
   const filtered  = getFilteredEvents();
-  const BOM = '\uFEFF';
-  const esc = s => '"' + String(s).replace(/"/g,'""') + '"';
-  const st  = f => { const s=dateStatus(f); if(s==='ok')return'Cerrada';if(s==='vencida')return'Vencida';if(s==='pendiente')return'Pendiente';return'Sin fecha'; };
-  const headers = ['Compañia','Equipo','Clasificacion','ID Evento','Fecha Evento','Descripcion','Accion','Responsable','Fecha Accion','Estado Fecha','Completada'];
-  const rows = [];
-  for (const ev of filtered) {
-    for (const a of ev.actions) {
-      rows.push([ev.cia||'ENG', ev.equipo, ev.clas, ev.id, ev.fecha, ev.desc, a.desc, a.resp, a.fecha||'Sin fecha', st(a.fecha), a.done?'SI':'NO']);
-    }
+
+  const st = f => {
+    const s = dateStatus(f);
+    if (s==='ok') return 'Cerrada';
+    if (s==='vencida') return 'Vencida';
+    if (s==='pendiente') return 'Pendiente';
+    return 'Sin fecha';
+  };
+
+  // Cargar SheetJS dinámicamente
+  if (typeof XLSX === 'undefined') {
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    script.onload = () => buildExcel(filtered, fecha, relevador, lugar, st);
+    script.onerror = () => { showToast('Error cargando librería Excel'); };
+    document.head.appendChild(script);
+  } else {
+    buildExcel(filtered, fecha, relevador, lugar, st);
   }
-  const csv = BOM + [headers,...rows].map(r=>r.map(esc).join(';')).join('\r\n');
-  const blob = new Blob([csv],{type:'text/csv;charset=utf-8'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `ENG_Pulling_CGC_${fecha.replace(/[-\/]/g,'')}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
+}
+
+function buildExcel(filtered, fecha, relevador, lugar, st) {
+  const wb = XLSX.utils.book_new();
+
+  // ── Agrupar por cia+equipo ────────────────────────────────────────────────
+  const groups = {};
+  filtered.forEach(ev => {
+    const key = (ev.cia||'ENG') + '||' + ev.equipo;
+    if (!groups[key]) groups[key] = { cia: ev.cia||'ENG', equipo: ev.equipo, events: [] };
+    groups[key].events.push(ev);
+  });
+
+  const HEADERS = ['Compañía','Equipo','Operación','ID','Fecha Evento','Título','Descripción','Acción','Responsable','Fecha Acción','Estado','Completada','Observaciones'];
+  const COL_W   = [14, 10, 12, 8, 12, 22, 32, 38, 20, 12, 12, 12, 30];
+
+  const allRows   = [];  // para hoja resumen
+  const groupStats = []; // para hoja gráficos
+
+  // ── Una hoja por equipo ───────────────────────────────────────────────────
+  Object.values(groups).sort((a,b) => (a.cia+a.equipo).localeCompare(b.cia+b.equipo)).forEach(g => {
+    const sheetName = (g.cia + '_' + g.equipo).replace(/[:\/?*\[\]]/g,'').substring(0,31);
+    const rows = [HEADERS];
+
+    let total=0, done=0, venc=0;
+    g.events.forEach(ev => {
+      if (ev.actions.length === 0) {
+        rows.push([ev.cia||'ENG', ev.equipo, ev.operacion||'Pulling', ev.id, ev.fecha, ev.titulo||'', ev.desc, '(Sin acciones)','','','','NO','']);
+      }
+      ev.actions.forEach(a => {
+        const estado = st(a.fecha);
+        const row = [ev.cia||'ENG', ev.equipo, ev.operacion||'Pulling', ev.id, ev.fecha, ev.titulo||ev.desc, ev.desc, a.desc, a.resp, a.fecha||'', estado, a.done?'SI':'NO', a.obs||''];
+        rows.push(row);
+        allRows.push(row);
+        total++;
+        if (a.done) done++;
+        if (!a.done && estado==='Vencida') venc++;
+      });
+    });
+
+    groupStats.push({ cia: g.cia, equipo: g.equipo, operacion: g.events[0]?.operacion||'Pulling', total, done, pend: total-done, venc, pct: total?Math.round(done/total*100):0 });
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    // Ancho de columnas
+    ws['!cols'] = COL_W.map(w => ({ wch: w }));
+    // Estilo encabezado (color de fondo negro)
+    const hdrRange = XLSX.utils.decode_range(ws['!ref']);
+    for (let c = hdrRange.s.c; c <= hdrRange.e.c; c++) {
+      const cell = ws[XLSX.utils.encode_cell({ r: 0, c })];
+      if (cell) cell.s = { font: { bold: true, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '111111' } }, alignment: { wrapText: true } };
+    }
+    // Marcar filas completadas en gris, vencidas en rojo
+    for (let r = 1; r < rows.length; r++) {
+      const completada = rows[r][11];
+      const estado     = rows[r][10];
+      for (let c = 0; c <= hdrRange.e.c; c++) {
+        const cellAddr = XLSX.utils.encode_cell({ r, c });
+        if (!ws[cellAddr]) continue;
+        if (completada === 'SI') {
+          ws[cellAddr].s = { font: { color: { rgb: 'AAAAAA' }, strike: true }, fill: { fgColor: { rgb: 'F5F5F5' } } };
+        } else if (estado === 'Vencida') {
+          ws[cellAddr].s = { font: { color: { rgb: 'A32D2D' }, bold: c===10 }, fill: { fgColor: { rgb: 'FDEAEA' } } };
+        }
+      }
+    }
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  });
+
+  // ── Hoja resumen ─────────────────────────────────────────────────────────
+  if (allRows.length > 0) {
+    const wsAll = XLSX.utils.aoa_to_sheet([HEADERS, ...allRows]);
+    wsAll['!cols'] = COL_W.map(w => ({ wch: w }));
+    const hdrRange = XLSX.utils.decode_range(wsAll['!ref']);
+    for (let c = hdrRange.s.c; c <= hdrRange.e.c; c++) {
+      const cell = wsAll[XLSX.utils.encode_cell({ r: 0, c })];
+      if (cell) cell.s = { font: { bold: true, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '111111' } } };
+    }
+    XLSX.utils.book_append_sheet(wb, wsAll, 'RESUMEN');
+  }
+
+  // ── Hoja estadísticas (base para gráficos) ───────────────────────────────
+  const statsHeaders = ['Compañía','Equipo','Operación','Total Acciones','Completadas','Pendientes','Vencidas','% Avance'];
+  const statsRows = groupStats.map(g => [g.cia, g.equipo, g.operacion, g.total, g.done, g.pend, g.venc, g.pct+'%']);
+
+  // Totales
+  const totTotal = groupStats.reduce((a,g)=>a+g.total,0);
+  const totDone  = groupStats.reduce((a,g)=>a+g.done,0);
+  const totPend  = groupStats.reduce((a,g)=>a+g.pend,0);
+  const totVenc  = groupStats.reduce((a,g)=>a+g.venc,0);
+  statsRows.push(['TOTAL','','',totTotal,totDone,totPend,totVenc,totTotal?Math.round(totDone/totTotal*100)+'%':'0%']);
+
+  const wsStats = XLSX.utils.aoa_to_sheet([statsHeaders, ...statsRows]);
+  wsStats['!cols'] = [14,10,12,16,14,12,12,12].map(w=>({wch:w}));
+
+  // Encabezado
+  const sRange = XLSX.utils.decode_range(wsStats['!ref']);
+  for (let c = sRange.s.c; c <= sRange.e.c; c++) {
+    const cell = wsStats[XLSX.utils.encode_cell({ r:0, c })];
+    if (cell) cell.s = { font:{ bold:true, color:{rgb:'FFFFFF'} }, fill:{ fgColor:{rgb:'1D9E75'} } };
+  }
+  // Fila de totales en negrita
+  const lastRow = statsRows.length;
+  for (let c = sRange.s.c; c <= sRange.e.c; c++) {
+    const cell = wsStats[XLSX.utils.encode_cell({ r:lastRow, c })];
+    if (cell) cell.s = { font:{ bold:true }, fill:{ fgColor:{rgb:'EFEFED'} } };
+  }
+
+  // Bloque de info del reporte
+  wsStats['A'+(statsRows.length+4)] = { v: 'Generado por: '+relevador, t:'s' };
+  wsStats['A'+(statsRows.length+5)] = { v: 'Lugar: '+lugar, t:'s' };
+  wsStats['A'+(statsRows.length+6)] = { v: 'Fecha: '+fecha, t:'s' };
+  wsStats['A'+(statsRows.length+7)] = { v: 'App ENG Pulling CGC — Cuenca Golfo San Jorge', t:'s' };
+
+  XLSX.utils.book_append_sheet(wb, wsStats, 'ESTADÍSTICAS');
+
+  // ── Descargar ─────────────────────────────────────────────────────────────
+  const fname = 'ENG_Pulling_' + fecha.replace(/[-\/]/g,'') + '.xlsx';
+  XLSX.writeFile(wb, fname);
+  showToast('Excel descargado correctamente');
 }
 
 // ─── SERVICE WORKER ───────────────────────────────────────────────────────────
@@ -854,8 +994,10 @@ document.addEventListener('DOMContentLoaded', () => {
   loadState();
   document.getElementById('review-date').value = reviewMeta.fecha || new Date().toISOString().split('T')[0];
   document.getElementById('review-by').value   = reviewMeta.relevador || '';
+  document.getElementById('review-lugar').value = reviewMeta.lugar || '';
   // guardar meta al cambiar campos
   document.getElementById('review-date').addEventListener('change', () => { reviewMeta.fecha = document.getElementById('review-date').value; saveState(); });
   document.getElementById('review-by').addEventListener('input',   () => { reviewMeta.relevador = document.getElementById('review-by').value; saveState(); });
+  document.getElementById('review-lugar').addEventListener('input', () => { reviewMeta.lugar = document.getElementById('review-lugar').value; saveState(); });
   renderAll();
 });
