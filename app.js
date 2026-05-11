@@ -457,6 +457,20 @@ function renderCard(ev) {
       <div class="card-body" id="body-${ev.id}" style="display:none">
         ${imgHtml}
         <div class="actions-list">${actionsHtml}</div>
+        <div class="add-ac-inline" id="add-ac-${ev.id}">
+          <div class="add-ac-fields" id="add-ac-fields-${ev.id}" style="display:none">
+            <input class="add-ac-input" id="add-ac-desc-${ev.id}" type="text" placeholder="Descripción de la acción">
+            <div class="add-ac-row">
+              <input class="add-ac-input" id="add-ac-resp-${ev.id}" type="text" placeholder="Responsable">
+              <input class="add-ac-input" id="add-ac-fecha-${ev.id}" type="text" placeholder="dd/mm/aaaa" style="max-width:110px">
+            </div>
+            <div class="add-ac-btns">
+              <button class="add-ac-cancel" onclick="hideAddAction('${ev.id}')">Cancelar</button>
+              <button class="add-ac-save" onclick="saveInlineAction('${ev.id}')">Guardar acción</button>
+            </div>
+          </div>
+          <button class="add-ac-trigger" id="add-ac-btn-${ev.id}" onclick="showAddAction('${ev.id}')">+ Agregar acción correctiva</button>
+        </div>
       </div>
     </div>`;
 }
@@ -511,6 +525,40 @@ function deleteAction(evId, actionId, e) {
   const ev = events.find(e => e.id === evId);
   if (!ev) return;
   ev.actions = ev.actions.filter(a => a.id !== actionId);
+  saveState();
+  renderAll();
+  // Mantener tarjeta abierta
+  const body = document.getElementById('body-'+evId);
+  if (body) {
+    body.style.display = 'block';
+    const chev = document.getElementById('chev-'+evId);
+    if (chev) chev.style.transform = 'rotate(90deg)';
+  }
+}
+
+function showAddAction(evId) {
+  document.getElementById('add-ac-fields-'+evId).style.display = 'block';
+  document.getElementById('add-ac-btn-'+evId).style.display   = 'none';
+  document.getElementById('add-ac-desc-'+evId).focus();
+}
+
+function hideAddAction(evId) {
+  document.getElementById('add-ac-fields-'+evId).style.display = 'none';
+  document.getElementById('add-ac-btn-'+evId).style.display    = '';
+  document.getElementById('add-ac-desc-'+evId).value  = '';
+  document.getElementById('add-ac-resp-'+evId).value  = '';
+  document.getElementById('add-ac-fecha-'+evId).value = '';
+}
+
+function saveInlineAction(evId) {
+  const desc  = document.getElementById('add-ac-desc-'+evId).value.trim();
+  const resp  = document.getElementById('add-ac-resp-'+evId).value.trim();
+  const fecha = document.getElementById('add-ac-fecha-'+evId).value.trim();
+  if (!desc) { document.getElementById('add-ac-desc-'+evId).focus(); return; }
+  const ev = events.find(e => e.id === evId);
+  if (!ev) return;
+  const newId = evId + '-' + Date.now();
+  ev.actions.push({ id: newId, desc, resp: resp||'—', fecha: fecha||'', done: false });
   saveState();
   renderAll();
   // Mantener tarjeta abierta
@@ -744,17 +792,29 @@ function exportPDF() {
   <div class="footer">Generado por App ENG Pulling CGC · ${new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'})}</div>
   </body></html>`;
 
-  // Método robusto: Blob URL para evitar bloqueo de popups en móvil
-  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href     = url;
-  a.download = `Reporte_ENG_Pulling_${(reviewMeta.fecha||new Date().toISOString().split('T')[0]).replace(/[-\/]/g,'')}.html`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 3000);
-  showToast('Reporte descargado — abrilo y usá Imprimir para PDF');
+  // Mostrar reporte en pantalla completa dentro de la misma página
+  let reportDiv = document.getElementById('report-overlay');
+  if (!reportDiv) {
+    reportDiv = document.createElement('div');
+    reportDiv.id = 'report-overlay';
+    reportDiv.style.cssText = 'position:fixed;inset:0;background:#fff;z-index:1000;overflow-y:auto;padding:0';
+    document.body.appendChild(reportDiv);
+  }
+  reportDiv.innerHTML = `
+    <div style="position:sticky;top:0;background:#111;color:#fff;display:flex;align-items:center;gap:12px;padding:10px 16px;z-index:10">
+      <button onclick="closeReport()" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:0;line-height:1">←</button>
+      <span style="font-size:14px;font-weight:600;flex:1">Reporte de acciones</span>
+      <button onclick="window.print()" style="background:#1D9E75;border:none;color:#fff;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">Imprimir / PDF</button>
+    </div>
+    <div style="padding:16px;max-width:800px;margin:0 auto">${html.replace(/<!DOCTYPE html>[\s\S]*?<body>/,'').replace(/<\/body>[\s\S]*?<\/html>/,'')}</div>`;
+  reportDiv.style.display = 'block';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeReport() {
+  const d = document.getElementById('report-overlay');
+  if (d) { d.style.display = 'none'; }
+  document.body.style.overflow = '';
 }
 
 // ─── EXPORTAR CSV ────────────────────────────────────────────────────────────
