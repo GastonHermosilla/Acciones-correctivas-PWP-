@@ -37,7 +37,7 @@ function getEqColor(equipo) {
 function dateStatus(f) {
   if (!f || f === '') return 'none';
   if (f === 'Cerrada') return 'ok';
-  const p = f.replace(/\./g, '/').split('/');
+  const p = f.replace(/[.]/g, '/').split('/');
   if (p.length < 3) return 'none';
   let [d, m, y] = p;
   if (y.length === 2) y = '20' + y;
@@ -819,13 +819,16 @@ function exportPDF() {
     reportDiv.style.cssText = 'position:fixed;inset:0;background:#fff;z-index:1000;overflow-y:auto;padding:0';
     document.body.appendChild(reportDiv);
   }
-  reportDiv.innerHTML = `
-    <div style="position:sticky;top:0;background:#111;color:#fff;display:flex;align-items:center;gap:12px;padding:10px 16px;z-index:10">
-      <button onclick="closeReport()" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:0;line-height:1">←</button>
-      <span style="font-size:14px;font-weight:600;flex:1">Reporte de acciones</span>
-      <button onclick="window.print()" style="background:#1D9E75;border:none;color:#fff;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">Imprimir / PDF</button>
-    </div>
-    <div style="padding:16px;max-width:800px;margin:0 auto">${html.replace(/<!DOCTYPE html>[\s\S]*?<body>/,'').replace(/<\/body>[\s\S]*?<\/html>/,'')}</div>`;
+  // Extraer solo el body del HTML
+  const bodyStart = html.indexOf('<body>') + 6;
+  const bodyEnd   = html.lastIndexOf('</body>');
+  const bodyHtml  = bodyStart > 6 && bodyEnd > 0 ? html.slice(bodyStart, bodyEnd) : html;
+  reportDiv.innerHTML = '<div style="position:sticky;top:0;background:#111;color:#fff;display:flex;align-items:center;gap:12px;padding:10px 16px;z-index:10">'
+    + '<button onclick="closeReport()" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:0;line-height:1">←</button>'
+    + '<span style="font-size:14px;font-weight:600;flex:1">Reporte de acciones</span>'
+    + '<button onclick="window.print()" style="background:#1D9E75;border:none;color:#fff;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">Imprimir / PDF</button>'
+    + '</div>'
+    + '<div style="padding:16px;max-width:800px;margin:0 auto">' + bodyHtml + '</div>';
   reportDiv.style.display = 'block';
   document.body.style.overflow = 'hidden';
 }
@@ -912,7 +915,7 @@ function buildExcel(filtered, fecha, relevador, lugar, st) {
 
   // ── Hoja por equipo ───────────────────────────────────────────────────────
   Object.values(groups).sort((a,b)=>(a.cia+a.equipo).localeCompare(b.cia+b.equipo)).forEach(g => {
-    const sheetName = (g.cia+'_'+g.equipo).replace(/[:\\/\?*\[\]]/g,'').substring(0,31);
+    const sheetName = (g.cia+'_'+g.equipo).split('').filter(c => !['|','?','*','[',']','\\','/'].includes(c)).join('').substring(0,31);
     const ws = {};
     const eqDot = g.equipo.includes('101') ? C.e101 : g.equipo.includes('102') ? C.e102 : C.e103;
     const eqLt  = g.equipo.includes('101') ? C.blueLt : g.equipo.includes('102') ? C.greenLt : C.amberLt;
@@ -1151,7 +1154,7 @@ function buildExcel(filtered, fecha, relevador, lugar, st) {
   XLSX.utils.book_append_sheet(wb, wsS, 'ESTADÍSTICAS');
 
   // ── Descargar ─────────────────────────────────────────────────────────────
-  const fname = 'ENG_Pulling_'+fecha.replace(/[-\/]/g,'')+'.xlsx';
+  const fname = 'ENG_Pulling_' + fecha.replace(/-/g,'') + '.xlsx';
   XLSX.writeFile(wb, fname, { bookType:'xlsx', type:'binary', cellStyles:true });
   showToast('Excel descargado con formato completo');
 }
