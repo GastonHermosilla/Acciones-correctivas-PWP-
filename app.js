@@ -866,120 +866,294 @@ function exportCSV() {
 function buildExcel(filtered, fecha, relevador, lugar, st) {
   const wb = XLSX.utils.book_new();
 
+  // ── Paleta CGC ────────────────────────────────────────────────────────────
+  const C = {
+    black:'111111', white:'FFFFFF', teal:'1D9E75', tealLt:'E1F5EE',
+    gray:'EFEFED', grayDk:'9B9893', red:'A32D2D', redLt:'FDEAEA',
+    amber:'BA7517', amberLt:'FDF6EA', green:'3B6D11', greenLt:'EAF3DE',
+    blue:'0C447C', blueLt:'E6F1FB',
+    e101:'378ADD', e102:'639922', e103:'BA7517',
+  };
+
+  const hdrStyle = (bg, fg) => ({
+    font:{ bold:true, color:{ rgb: fg||C.white }, sz:10 },
+    fill:{ patternType:'solid', fgColor:{ rgb: bg||C.black } },
+    alignment:{ horizontal:'center', vertical:'center', wrapText:true },
+    border:{ bottom:{ style:'thin', color:{ rgb:'CCCCCC' } } }
+  });
+
+  const cellStyle = (bg, fg, bold, strike) => ({
+    font:{ color:{ rgb: fg||C.black }, bold:!!bold, strike:!!strike, sz:9 },
+    fill:{ patternType:'solid', fgColor:{ rgb: bg||C.white } },
+    alignment:{ vertical:'top', wrapText:true },
+    border:{ bottom:{ style:'hair', color:{ rgb:'EEEEEE' } } }
+  });
+
+  const numStyle = (bg, fg, bold) => ({
+    font:{ color:{ rgb: fg||C.black }, bold:!!bold, sz:10 },
+    fill:{ patternType:'solid', fgColor:{ rgb: bg||C.white } },
+    alignment:{ horizontal:'center', vertical:'center' },
+    border:{ bottom:{ style:'thin', color:{ rgb:'DDDDDD' } } }
+  });
+
   // ── Agrupar por cia+equipo ────────────────────────────────────────────────
   const groups = {};
   filtered.forEach(ev => {
     const key = (ev.cia||'ENG') + '||' + ev.equipo;
-    if (!groups[key]) groups[key] = { cia: ev.cia||'ENG', equipo: ev.equipo, events: [] };
+    if (!groups[key]) groups[key] = { cia:ev.cia||'ENG', equipo:ev.equipo, operacion:ev.operacion||'Pulling', events:[] };
     groups[key].events.push(ev);
   });
 
-  const HEADERS = ['Compañía','Equipo','Operación','ID','Fecha Evento','Título','Descripción','Acción','Responsable','Fecha Acción','Estado','Completada','Observaciones'];
-  const COL_W   = [14, 10, 12, 8, 12, 22, 32, 38, 20, 12, 12, 12, 30];
+  const HDRS = ['Compañía','Equipo','Operación','ID','Fecha','Título','Descripción del evento','Acción correctiva','Responsable','Fecha acción','Estado','Completada','Observaciones'];
+  const COL_W = [14,10,12,8,10,22,34,38,20,12,12,12,28];
+  const groupStats = [];
+  const opStats    = {};
+  const allDataRows = [];
 
-  const allRows   = [];  // para hoja resumen
-  const groupStats = []; // para hoja gráficos
+  // ── Hoja por equipo ───────────────────────────────────────────────────────
+  Object.values(groups).sort((a,b)=>(a.cia+a.equipo).localeCompare(b.cia+b.equipo)).forEach(g => {
+    const sheetName = (g.cia+'_'+g.equipo).replace(/[:\\/\?*\[\]]/g,'').substring(0,31);
+    const ws = {};
+    const eqDot = g.equipo.includes('101') ? C.e101 : g.equipo.includes('102') ? C.e102 : C.e103;
+    const eqLt  = g.equipo.includes('101') ? C.blueLt : g.equipo.includes('102') ? C.greenLt : C.amberLt;
 
-  // ── Una hoja por equipo ───────────────────────────────────────────────────
-  Object.values(groups).sort((a,b) => (a.cia+a.equipo).localeCompare(b.cia+b.equipo)).forEach(g => {
-    const sheetName = (g.cia + '_' + g.equipo).replace(/[:\/?*\[\]]/g,'').substring(0,31);
-    const rows = [HEADERS];
+    // Fila 0: Título del equipo (fila fusionada visualmente)
+    const titleRow = [`${g.cia} — ${g.equipo} — ${g.operacion}`];
+    XLSX.utils.sheet_add_aoa(ws, [titleRow], { origin:'A1' });
+    ws['A1'].s = { font:{ bold:true, color:{rgb:C.white}, sz:13 }, fill:{ patternType:'solid', fgColor:{rgb:eqDot} }, alignment:{ horizontal:'left', vertical:'center' } };
 
-    let total=0, done=0, venc=0;
+    // Fila 1: Relevamiento
+    const relRow = [`Relevado por: ${relevador}  |  Lugar: ${lugar}  |  Fecha: ${fecha}`];
+    XLSX.utils.sheet_add_aoa(ws, [relRow], { origin:'A2' });
+    ws['A2'].s = { font:{ color:{rgb:C.grayDk}, sz:9 }, fill:{ patternType:'solid', fgColor:{rgb:C.gray} } };
+
+    // Fila 2: Encabezados
+    XLSX.utils.sheet_add_aoa(ws, [HDRS], { origin:'A3' });
+    HDRS.forEach((_,c) => {
+      const addr = XLSX.utils.encode_cell({r:2,c});
+      if (ws[addr]) ws[addr].s = hdrStyle(C.black, C.white);
+    });
+
+    let rowIdx = 3;
+    let total=0, done=0, venc=0, pend=0;
+
     g.events.forEach(ev => {
+      const evBg = ev.actions.length===0 ? C.gray : null;
       if (ev.actions.length === 0) {
-        rows.push([ev.cia||'ENG', ev.equipo, ev.operacion||'Pulling', ev.id, ev.fecha, ev.titulo||'', ev.desc, '(Sin acciones)','','','','NO','']);
+        const row = [ev.cia||'ENG',ev.equipo,ev.operacion||'Pulling',ev.id,ev.fecha,ev.titulo||'',ev.desc,'(Sin acciones)','','','','NO',''];
+        XLSX.utils.sheet_add_aoa(ws, [row], { origin: XLSX.utils.encode_cell({r:rowIdx,c:0}) });
+        row.forEach((_,c) => { const addr=XLSX.utils.encode_cell({r:rowIdx,c}); if(ws[addr]) ws[addr].s = cellStyle(C.gray,C.grayDk); });
+        rowIdx++;
       }
       ev.actions.forEach(a => {
         const estado = st(a.fecha);
-        const row = [ev.cia||'ENG', ev.equipo, ev.operacion||'Pulling', ev.id, ev.fecha, ev.titulo||ev.desc, ev.desc, a.desc, a.resp, a.fecha||'', estado, a.done?'SI':'NO', a.obs||''];
-        rows.push(row);
-        allRows.push(row);
-        total++;
-        if (a.done) done++;
-        if (!a.done && estado==='Vencida') venc++;
+        const isDone = a.done;
+        const isVenc = !isDone && estado==='Vencida';
+        const bg = isDone ? C.gray : isVenc ? C.redLt : C.white;
+        const fg = isDone ? C.grayDk : isVenc ? C.red : C.black;
+        const row = [ev.cia||'ENG',ev.equipo,ev.operacion||'Pulling',ev.id,ev.fecha,ev.titulo||ev.desc,ev.desc,a.desc,a.resp,a.fecha||'',estado,isDone?'SI':'NO',a.obs||''];
+        XLSX.utils.sheet_add_aoa(ws, [row], { origin: XLSX.utils.encode_cell({r:rowIdx,c:0}) });
+        row.forEach((_,c) => {
+          const addr = XLSX.utils.encode_cell({r:rowIdx,c});
+          if (!ws[addr]) return;
+          if (isDone) ws[addr].s = cellStyle(C.gray,C.grayDk,false,c===7);
+          else if (isVenc) ws[addr].s = cellStyle(C.redLt, c===10?C.red:C.black, c===10);
+          else ws[addr].s = cellStyle(C.white, C.black);
+          // Columna completada: color especial
+          if (c===11) ws[addr].s = { ...ws[addr].s, font:{ bold:true, color:{rgb:isDone?C.green:C.grayDk}, sz:9 }, alignment:{horizontal:'center'} };
+          // Columna estado
+          if (c===10 && !isDone) ws[addr].s = { ...ws[addr].s, font:{ bold:true, color:{rgb:isVenc?C.red:C.amber}, sz:9 }, alignment:{horizontal:'center'} };
+        });
+        allDataRows.push(row);
+        total++; if(isDone) done++; if(isVenc) venc++;
       });
+      pend = total - done;
     });
 
-    groupStats.push({ cia: g.cia, equipo: g.equipo, operacion: g.events[0]?.operacion||'Pulling', total, done, pend: total-done, venc, pct: total?Math.round(done/total*100):0 });
+    // Fila resumen del equipo
+    const sumRow = ['','','','','','','','TOTALES DEL EQUIPO','',`Total: ${total}`,`Completadas: ${done}`,`Pendientes: ${pend}`,`Vencidas: ${venc}`];
+    XLSX.utils.sheet_add_aoa(ws, [sumRow], { origin: XLSX.utils.encode_cell({r:rowIdx,c:0}) });
+    sumRow.forEach((_,c) => {
+      const addr = XLSX.utils.encode_cell({r:rowIdx,c});
+      if (ws[addr]) ws[addr].s = { font:{bold:true,color:{rgb:C.white},sz:9}, fill:{patternType:'solid',fgColor:{rgb:eqDot}}, alignment:{horizontal:'center'} };
+    });
 
-    const ws = XLSX.utils.aoa_to_sheet(rows);
-    // Ancho de columnas
-    ws['!cols'] = COL_W.map(w => ({ wch: w }));
-    // Estilo encabezado (color de fondo negro)
-    const hdrRange = XLSX.utils.decode_range(ws['!ref']);
-    for (let c = hdrRange.s.c; c <= hdrRange.e.c; c++) {
-      const cell = ws[XLSX.utils.encode_cell({ r: 0, c })];
-      if (cell) cell.s = { font: { bold: true, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '111111' } }, alignment: { wrapText: true } };
-    }
-    // Marcar filas completadas en gris, vencidas en rojo
-    for (let r = 1; r < rows.length; r++) {
-      const completada = rows[r][11];
-      const estado     = rows[r][10];
-      for (let c = 0; c <= hdrRange.e.c; c++) {
-        const cellAddr = XLSX.utils.encode_cell({ r, c });
-        if (!ws[cellAddr]) continue;
-        if (completada === 'SI') {
-          ws[cellAddr].s = { font: { color: { rgb: 'AAAAAA' }, strike: true }, fill: { fgColor: { rgb: 'F5F5F5' } } };
-        } else if (estado === 'Vencida') {
-          ws[cellAddr].s = { font: { color: { rgb: 'A32D2D' }, bold: c===10 }, fill: { fgColor: { rgb: 'FDEAEA' } } };
-        }
-      }
-    }
+    ws['!ref'] = XLSX.utils.encode_range({s:{r:0,c:0},{r:rowIdx,c:HDRS.length-1}});
+    ws['!cols'] = COL_W.map(w=>({wch:w}));
+    ws['!rows'] = [{hpt:24},{hpt:16},{hpt:22}];
+
+    groupStats.push({ cia:g.cia, equipo:g.equipo, operacion:g.operacion, total, done, pend, venc, pct:total?Math.round(done/total*100):0, dot:eqDot, lt:eqLt });
+    const op = g.operacion||'Pulling';
+    if (!opStats[op]) opStats[op] = { total:0, done:0, pend:0, venc:0 };
+    opStats[op].total+=total; opStats[op].done+=done; opStats[op].pend+=pend; opStats[op].venc+=venc;
+
     XLSX.utils.book_append_sheet(wb, ws, sheetName);
   });
 
-  // ── Hoja resumen ─────────────────────────────────────────────────────────
-  if (allRows.length > 0) {
-    const wsAll = XLSX.utils.aoa_to_sheet([HEADERS, ...allRows]);
-    wsAll['!cols'] = COL_W.map(w => ({ wch: w }));
-    const hdrRange = XLSX.utils.decode_range(wsAll['!ref']);
-    for (let c = hdrRange.s.c; c <= hdrRange.e.c; c++) {
-      const cell = wsAll[XLSX.utils.encode_cell({ r: 0, c })];
-      if (cell) cell.s = { font: { bold: true, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '111111' } } };
-    }
-    XLSX.utils.book_append_sheet(wb, wsAll, 'RESUMEN');
+  // ── Hoja RESUMEN ──────────────────────────────────────────────────────────
+  if (allDataRows.length > 0) {
+    const wsR = {};
+    XLSX.utils.sheet_add_aoa(wsR, [['RESUMEN GENERAL — ENG PULLING CGC']], {origin:'A1'});
+    wsR['A1'].s = { font:{bold:true,color:{rgb:C.white},sz:14}, fill:{patternType:'solid',fgColor:{rgb:C.black}} };
+    XLSX.utils.sheet_add_aoa(wsR, [[`Relevado por: ${relevador}  |  Lugar: ${lugar}  |  Fecha: ${fecha}`]], {origin:'A2'});
+    wsR['A2'].s = { font:{color:{rgb:C.grayDk},sz:9}, fill:{patternType:'solid',fgColor:{rgb:C.gray}} };
+    XLSX.utils.sheet_add_aoa(wsR, [HDRS], {origin:'A3'});
+    HDRS.forEach((_,c) => { const a=XLSX.utils.encode_cell({r:2,c}); if(wsR[a]) wsR[a].s = hdrStyle(C.teal,C.white); });
+    allDataRows.forEach((row,i) => {
+      XLSX.utils.sheet_add_aoa(wsR, [row], {origin:XLSX.utils.encode_cell({r:3+i,c:0})});
+      const isDone = row[11]==='SI';
+      const isVenc = !isDone && row[10]==='Vencida';
+      row.forEach((_,c) => {
+        const addr = XLSX.utils.encode_cell({r:3+i,c});
+        if (!wsR[addr]) return;
+        if (isDone) wsR[addr].s = cellStyle(C.gray,C.grayDk,false,c===7);
+        else if (isVenc) wsR[addr].s = cellStyle(C.redLt,c===10?C.red:C.black,c===10);
+        else wsR[addr].s = cellStyle(i%2===0?C.white:'F9F9F8',C.black);
+      });
+    });
+    wsR['!ref'] = XLSX.utils.encode_range({s:{r:0,c:0},{r:2+allDataRows.length,c:HDRS.length-1}});
+    wsR['!cols'] = COL_W.map(w=>({wch:w}));
+    XLSX.utils.book_append_sheet(wb, wsR, 'RESUMEN');
   }
 
-  // ── Hoja estadísticas (base para gráficos) ───────────────────────────────
-  const statsHeaders = ['Compañía','Equipo','Operación','Total Acciones','Completadas','Pendientes','Vencidas','% Avance'];
-  const statsRows = groupStats.map(g => [g.cia, g.equipo, g.operacion, g.total, g.done, g.pend, g.venc, g.pct+'%']);
+  // ── Hoja ESTADÍSTICAS + datos para gráficos ───────────────────────────────
+  const wsS = {};
 
-  // Totales
-  const totTotal = groupStats.reduce((a,g)=>a+g.total,0);
-  const totDone  = groupStats.reduce((a,g)=>a+g.done,0);
-  const totPend  = groupStats.reduce((a,g)=>a+g.pend,0);
-  const totVenc  = groupStats.reduce((a,g)=>a+g.venc,0);
-  statsRows.push(['TOTAL','','',totTotal,totDone,totPend,totVenc,totTotal?Math.round(totDone/totTotal*100)+'%':'0%']);
+  // Título
+  XLSX.utils.sheet_add_aoa(wsS, [['ESTADÍSTICAS Y GRÁFICOS — ENG PULLING CGC']], {origin:'A1'});
+  wsS['A1'].s = { font:{bold:true,color:{rgb:C.white},sz:14}, fill:{patternType:'solid',fgColor:{rgb:C.teal}} };
 
-  const wsStats = XLSX.utils.aoa_to_sheet([statsHeaders, ...statsRows]);
-  wsStats['!cols'] = [14,10,12,16,14,12,12,12].map(w=>({wch:w}));
+  // Info relevamiento
+  XLSX.utils.sheet_add_aoa(wsS, [
+    [`Relevado por: ${relevador}`],
+    [`Lugar: ${lugar}`],
+    [`Fecha: ${fecha}`],
+    [`Total eventos: ${filtered.length}  |  Total acciones: ${allDataRows.length}`],
+    [''],
+  ], {origin:'A2'});
+  for(let r=1;r<=4;r++){const a=`A${r+1}`;if(wsS[a])wsS[a].s={font:{color:{rgb:C.grayDk},sz:9},fill:{patternType:'solid',fgColor:{rgb:C.gray}}};}
 
-  // Encabezado
-  const sRange = XLSX.utils.decode_range(wsStats['!ref']);
-  for (let c = sRange.s.c; c <= sRange.e.c; c++) {
-    const cell = wsStats[XLSX.utils.encode_cell({ r:0, c })];
-    if (cell) cell.s = { font:{ bold:true, color:{rgb:'FFFFFF'} }, fill:{ fgColor:{rgb:'1D9E75'} } };
-  }
-  // Fila de totales en negrita
-  const lastRow = statsRows.length;
-  for (let c = sRange.s.c; c <= sRange.e.c; c++) {
-    const cell = wsStats[XLSX.utils.encode_cell({ r:lastRow, c })];
-    if (cell) cell.s = { font:{ bold:true }, fill:{ fgColor:{rgb:'EFEFED'} } };
-  }
+  // Tabla 1: Por equipo
+  const t1Start = 7;
+  const t1Hdrs  = ['Compañía','Equipo','Operación','Total','Completadas','Pendientes','Vencidas','% Avance'];
+  XLSX.utils.sheet_add_aoa(wsS, [['RESUMEN POR EQUIPO']], {origin:`A${t1Start-1}`});
+  wsS[`A${t1Start-1}`].s = { font:{bold:true,color:{rgb:C.white},sz:11}, fill:{patternType:'solid',fgColor:{rgb:C.black}} };
+  XLSX.utils.sheet_add_aoa(wsS, [t1Hdrs], {origin:`A${t1Start}`});
+  t1Hdrs.forEach((_,c)=>{ const a=XLSX.utils.encode_cell({r:t1Start-1,c}); if(wsS[a]) wsS[a].s=hdrStyle(C.black,C.white); });
 
-  // Bloque de info del reporte
-  wsStats['A'+(statsRows.length+4)] = { v: 'Generado por: '+relevador, t:'s' };
-  wsStats['A'+(statsRows.length+5)] = { v: 'Lugar: '+lugar, t:'s' };
-  wsStats['A'+(statsRows.length+6)] = { v: 'Fecha: '+fecha, t:'s' };
-  wsStats['A'+(statsRows.length+7)] = { v: 'App ENG Pulling CGC — Cuenca Golfo San Jorge', t:'s' };
+  groupStats.forEach((g,i) => {
+    const row = [g.cia, g.equipo, g.operacion, g.total, g.done, g.pend, g.venc, g.pct+'%'];
+    XLSX.utils.sheet_add_aoa(wsS, [row], {origin:`A${t1Start+1+i}`});
+    const eqBg = g.lt||C.gray;
+    row.forEach((_,c) => {
+      const addr = XLSX.utils.encode_cell({r:t1Start+i,c});
+      if (!wsS[addr]) return;
+      if (c <= 2) wsS[addr].s = cellStyle(eqBg, C.black);
+      else if (c===4) wsS[addr].s = numStyle(C.greenLt,C.green,true);
+      else if (c===5) wsS[addr].s = numStyle(C.amberLt,C.amber,true);
+      else if (c===6) wsS[addr].s = numStyle(C.redLt,C.red,true);
+      else if (c===7) wsS[addr].s = numStyle(eqBg,g.dot||C.black,true);
+      else wsS[addr].s = numStyle(C.white,C.black);
+    });
+  });
 
-  XLSX.utils.book_append_sheet(wb, wsStats, 'ESTADÍSTICAS');
+  // Fila total
+  const totT=groupStats.reduce((a,g)=>a+g.total,0);
+  const totD=groupStats.reduce((a,g)=>a+g.done,0);
+  const totP=groupStats.reduce((a,g)=>a+g.pend,0);
+  const totV=groupStats.reduce((a,g)=>a+g.venc,0);
+  const totRow=['TOTAL','','',totT,totD,totP,totV,totT?Math.round(totD/totT*100)+'%':'0%'];
+  XLSX.utils.sheet_add_aoa(wsS, [totRow], {origin:`A${t1Start+1+groupStats.length}`});
+  totRow.forEach((_,c)=>{ const addr=XLSX.utils.encode_cell({r:t1Start+groupStats.length,c}); if(wsS[addr]) wsS[addr].s=numStyle(C.tealLt,C.teal,true); });
+
+  // Tabla 2: Por tipo de operación
+  const t2Start = t1Start + groupStats.length + 4;
+  const t2Hdrs  = ['Operación','Total','Completadas','Pendientes','Vencidas'];
+  XLSX.utils.sheet_add_aoa(wsS, [['RESUMEN POR TIPO DE OPERACIÓN']], {origin:`A${t2Start-1}`});
+  wsS[`A${t2Start-1}`].s = { font:{bold:true,color:{rgb:C.white},sz:11}, fill:{patternType:'solid',fgColor:{rgb:C.black}} };
+  XLSX.utils.sheet_add_aoa(wsS, [t2Hdrs], {origin:`A${t2Start}`});
+  t2Hdrs.forEach((_,c)=>{ const a=XLSX.utils.encode_cell({r:t2Start-1,c}); if(wsS[a]) wsS[a].s=hdrStyle(C.black,C.white); });
+
+  const opColors = { 'Pulling':C.e103, 'Workover':C.e102, 'Perforación':C.e101 };
+  Object.entries(opStats).forEach(([op,s],i)=>{
+    const row=[op,s.total,s.done,s.pend,s.venc];
+    XLSX.utils.sheet_add_aoa(wsS,[row],{origin:`A${t2Start+1+i}`});
+    const opBg = opColors[op]||C.grayDk;
+    row.forEach((_,c)=>{
+      const addr=XLSX.utils.encode_cell({r:t2Start+i,c});
+      if(!wsS[addr])return;
+      if(c===0) wsS[addr].s={font:{bold:true,color:{rgb:C.white},sz:9},fill:{patternType:'solid',fgColor:{rgb:opBg}},alignment:{horizontal:'center'}};
+      else if(c===2) wsS[addr].s=numStyle(C.greenLt,C.green,true);
+      else if(c===3) wsS[addr].s=numStyle(C.amberLt,C.amber,true);
+      else if(c===4) wsS[addr].s=numStyle(C.redLt,C.red,true);
+      else wsS[addr].s=numStyle(C.white,C.black);
+    });
+  });
+
+  // Tabla 3: Indicadores clave
+  const t3Start = t2Start + Object.keys(opStats).length + 4;
+  XLSX.utils.sheet_add_aoa(wsS,[['INDICADORES CLAVE']],{origin:`A${t3Start-1}`});
+  wsS[`A${t3Start-1}`].s={ font:{bold:true,color:{rgb:C.white},sz:11}, fill:{patternType:'solid',fgColor:{rgb:C.black}} };
+  const pctGen = totT?Math.round(totD/totT*100):0;
+  const kpis = [
+    ['Indicador','Valor','Referencia'],
+    ['% Avance general', pctGen+'%', pctGen>=75?'✅ Bueno':pctGen>=50?'⚠️ Regular':'🔴 Crítico'],
+    ['Acciones completadas', totD, `de ${totT} totales`],
+    ['Acciones pendientes', totP, `${totT?Math.round(totP/totT*100):0}% del total`],
+    ['Acciones vencidas', totV, totV===0?'✅ Sin vencidas':'🔴 Requiere atención'],
+    ['Eventos registrados', filtered.length, `${groupStats.length} equipos`],
+  ];
+  XLSX.utils.sheet_add_aoa(wsS,kpis,{origin:`A${t3Start}`});
+  kpis.forEach((row,ri)=>{
+    row.forEach((_,c)=>{
+      const addr=XLSX.utils.encode_cell({r:t3Start-1+ri,c});
+      if(!wsS[addr])return;
+      if(ri===0) wsS[addr].s=hdrStyle(C.teal,C.white);
+      else {
+        const bg = c===2?C.tealLt:ri%2===0?C.white:'F9FAF9';
+        wsS[addr].s={font:{color:{rgb:C.black},sz:10,bold:c===1},fill:{patternType:'solid',fgColor:{rgb:bg}},alignment:{horizontal:c===1?'center':'left'},border:{bottom:{style:'hair',color:{rgb:'EEEEEE'}}}};
+      }
+    });
+  });
+
+  // GRÁFICO — datos para que Excel los grafique (tabla auxiliar)
+  const chartStart = t3Start + kpis.length + 3;
+  XLSX.utils.sheet_add_aoa(wsS,[['DATOS PARA GRÁFICOS']],{origin:`A${chartStart-1}`});
+  wsS[`A${chartStart-1}`].s={ font:{bold:true,color:{rgb:C.white},sz:10}, fill:{patternType:'solid',fgColor:{rgb:C.black}} };
+
+  const chartHdrs=['Equipo','Completadas','Pendientes','Vencidas'];
+  XLSX.utils.sheet_add_aoa(wsS,[chartHdrs],{origin:`A${chartStart}`});
+  chartHdrs.forEach((_,c)=>{ const a=XLSX.utils.encode_cell({r:chartStart-1,c}); if(wsS[a]) wsS[a].s=hdrStyle(C.black,C.white); });
+
+  groupStats.forEach((g,i)=>{
+    const row=[`${g.cia}·${g.equipo}`,g.done,g.pend,g.venc];
+    XLSX.utils.sheet_add_aoa(wsS,[row],{origin:`A${chartStart+1+i}`});
+    row.forEach((_,c)=>{
+      const addr=XLSX.utils.encode_cell({r:chartStart+i,c});
+      if(!wsS[addr])return;
+      if(c===0) wsS[addr].s=cellStyle(g.lt||C.gray,C.black,true);
+      else if(c===1) wsS[addr].s=numStyle(C.greenLt,C.green,true);
+      else if(c===2) wsS[addr].s=numStyle(C.amberLt,C.amber,true);
+      else wsS[addr].s=numStyle(C.redLt,C.red,true);
+    });
+  });
+
+  // Nota sobre gráficos
+  const noteRow = chartStart + groupStats.length + 2;
+  wsS[`A${noteRow}`]={ v:'💡 Para crear gráficos: seleccioná la tabla "DATOS PARA GRÁFICOS" → Insertar → Gráfico de barras o torta', t:'s' };
+  wsS[`A${noteRow}`].s={ font:{color:{rgb:C.grayDk},italic:true,sz:9} };
+
+  const lastRef = XLSX.utils.encode_cell({r:noteRow,c:7});
+  wsS['!ref'] = `A1:${lastRef}`;
+  wsS['!cols'] = [18,12,14,10,14,12,12,16].map(w=>({wch:w}));
+  wsS['!rows'] = [{hpt:28},...Array(100).fill({hpt:18})];
+
+  XLSX.utils.book_append_sheet(wb, wsS, 'ESTADÍSTICAS');
 
   // ── Descargar ─────────────────────────────────────────────────────────────
-  const fname = 'ENG_Pulling_' + fecha.replace(/[-\/]/g,'') + '.xlsx';
-  XLSX.writeFile(wb, fname);
-  showToast('Excel descargado correctamente');
+  const fname = 'ENG_Pulling_'+fecha.replace(/[-\/]/g,'')+'.xlsx';
+  XLSX.writeFile(wb, fname, { bookType:'xlsx', type:'binary', cellStyles:true });
+  showToast('Excel descargado con formato completo');
 }
 
 // ─── SERVICE WORKER ───────────────────────────────────────────────────────────
